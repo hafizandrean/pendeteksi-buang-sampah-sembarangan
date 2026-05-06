@@ -25,6 +25,9 @@ Route::prefix('dashboard')
             ->whereNumber('detection')
             ->name('validation');
 
+        Route::post('/send-summary', [DetectionController::class, 'sendSummaryToTelegram'])
+            ->name('send-summary');
+
         Route::get('/export', [DetectionController::class, 'exportCsv'])
             ->name('export');
     });
