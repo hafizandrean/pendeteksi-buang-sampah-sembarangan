@@ -419,51 +419,7 @@
 </head>
 <body>
 
-@php
-    $today = now()->startOfDay();
-    $todayDetections = $detections->where('waktu_kejadian', '>=', $today);
-    
-    // Total pelanggaran hari ini
-    $totalHariIni = $todayDetections->where('status_indikasi', 'Mencurigakan')->count();
-    
-    // Terdenda logic (using status_validasi as a proxy or just mock based on text)
-    $belumTerdenda = $todayDetections->where('status_indikasi', 'Mencurigakan')
-                        ->where('status_validasi', 'Belum divalidasi')->count();
-    $sudahTerdenda = $totalHariIni - $belumTerdenda;
 
-    // Jam tersibuk 
-    $jamTersibuk = '-';
-    if($todayDetections->count() > 0) {
-        $hours = $todayDetections->map(function($d) {
-            return $d->waktu_kejadian ? $d->waktu_kejadian->format('H') : null;
-        })->filter()->countBy();
-        if ($hours->isNotEmpty()) {
-            $busiestHour = $hours->sortDesc()->keys()->first();
-            $jamTersibuk = $busiestHour . '.00';
-        }
-    }
-
-    // Kategori Usia
-    $anakAnak = 0;
-    $remaja = 0;
-    $dewasa = 0;
-
-    foreach ($detections as $item) {
-        if ($item->status_indikasi === 'Mencurigakan') {
-            $ket = strtolower($item->keterangan ?? '');
-            if (str_contains($ket, 'anak')) {
-                $anakAnak++;
-            } elseif (str_contains($ket, 'remaja')) {
-                $remaja++;
-            } elseif (str_contains($ket, 'dewasa')) {
-                $dewasa++;
-            } else {
-                // If not specified but is violation, classify as Dewasa default to match mock mostly
-                $dewasa++; 
-            }
-        }
-    }
-@endphp
 
     <div class="container">
         <!-- Header -->
@@ -536,10 +492,10 @@
             <section class="glass-panel">
                 <h2 class="section-title">DATA PELANGGARAN</h2>
                 <div class="filter-tabs">
-                    <div class="filter-tab active">Semua</div>
-                    <div class="filter-tab">Anak-anak</div>
-                    <div class="filter-tab">Remaja</div>
-                    <div class="filter-tab">Dewasa</div>
+                    <a href="{{ route('dashboard.index', ['filter' => 'semua']) }}" class="filter-tab {{ $filter === 'semua' ? 'active' : '' }}" style="text-decoration:none;">Semua</a>
+                    <a href="{{ route('dashboard.index', ['filter' => 'anak-anak']) }}" class="filter-tab {{ $filter === 'anak-anak' ? 'active' : '' }}" style="text-decoration:none;">Anak-anak</a>
+                    <a href="{{ route('dashboard.index', ['filter' => 'remaja']) }}" class="filter-tab {{ $filter === 'remaja' ? 'active' : '' }}" style="text-decoration:none;">Remaja</a>
+                    <a href="{{ route('dashboard.index', ['filter' => 'dewasa']) }}" class="filter-tab {{ $filter === 'dewasa' ? 'active' : '' }}" style="text-decoration:none;">Dewasa</a>
                 </div>
                 <div class="table-container">
                     <table>
@@ -555,7 +511,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($detections->where('status_indikasi', 'Mencurigakan') as $item)
+                            @forelse ($detections as $item)
                                 @php
                                     $ket = strtolower($item->keterangan ?? '');
                                     $kategori = 'Dewasa';
@@ -605,6 +561,9 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+                <div style="margin-top: 1.5rem;">
+                    {{ $detections->links('pagination::bootstrap-4') }}
                 </div>
             </section>
 

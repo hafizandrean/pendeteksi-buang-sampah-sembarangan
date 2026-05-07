@@ -9,11 +9,69 @@ use Illuminate\Support\Facades\Log;
 
 class DetectionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $detections = Detection::latest()->get();
+        $today = now()->startOfDay();
 
-        return view('dashboard.index', compact('detections'));
+        // Stats Hari Ini
+        $todayQuery = Detection::where('waktu_kejadian', '>=', $today)
+            ->where('status_indikasi', 'Mencurigakan');
+            
+        $totalHariIni = $todayQuery->count();
+        $belumTerdenda = (clone $todayQuery)->where('status_validasi', 'Belum divalidasi')->count();
+        $sudahTerdenda = $totalHariIni - $belumTerdenda;
+
+        // Jam tersibuk hari ini
+        $jamTersibuk = '-';
+        $todayDetections = $todayQuery->get(['waktu_kejadian']);
+        if ($todayDetections->isNotEmpty()) {
+            $hours = $todayDetections->map(function ($d) {
+                return $d->waktu_kejadian ? $d->waktu_kejadian->format('H') : null;
+            })->filter()->countBy();
+            
+            if ($hours->isNotEmpty()) {
+                $jamTersibuk = $hours->sortDesc()->keys()->first() . '.00';
+            }
+        }
+
+        // Kategori Usia (Keseluruhan)
+        $anakAnak = Detection::where('status_indikasi', 'Mencurigakan')->where('keterangan', 'LIKE', '%anak%')->count();
+        $remaja = Detection::where('status_indikasi', 'Mencurigakan')->where('keterangan', 'LIKE', '%remaja%')->count();
+        $totalMencurigakan = Detection::where('status_indikasi', 'Mencurigakan')->count();
+        $dewasa = max(0, $totalMencurigakan - $anakAnak - $remaja);
+
+        // Data Table dengan Pagination dan Filter
+        $filter = $request->query('filter', 'semua');
+        
+        $query = Detection::where('status_indikasi', 'Mencurigakan')->latest();
+        
+        if ($filter === 'anak-anak') {
+            $query->where('keterangan', 'LIKE', '%anak%');
+        } elseif ($filter === 'remaja') {
+            $query->where('keterangan', 'LIKE', '%remaja%');
+        } elseif ($filter === 'dewasa') {
+            $query->where(function($q) {
+                $q->where('keterangan', 'LIKE', '%dewasa%')
+                  ->orWhere(function($q2) {
+                      $q2->where('keterangan', 'NOT LIKE', '%anak%')
+                         ->where('keterangan', 'NOT LIKE', '%remaja%');
+                  });
+            });
+        }
+
+        $detections = $query->paginate(10)->withQueryString();
+
+        return view('dashboard.index', compact(
+            'detections',
+            'totalHariIni',
+            'belumTerdenda',
+            'sudahTerdenda',
+            'jamTersibuk',
+            'anakAnak',
+            'remaja',
+            'dewasa',
+            'filter'
+        ));
     }
 
     public function create()
@@ -82,8 +140,6 @@ class DetectionController extends Controller
 
     public function exportCsv()
     {
-        $detections = Detection::latest()->get();
-
         $filename = 'data_deteksi.csv';
 
         $headers = [
@@ -91,7 +147,7 @@ class DetectionController extends Controller
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function () use ($detections) {
+        $callback = function () {
             $file = fopen('php://output', 'w');
 
             fputcsv($file, [
@@ -104,7 +160,7 @@ class DetectionController extends Controller
                 'Tindak Lanjut',
             ]);
 
-            foreach ($detections as $detection) {
+            foreach (Detection::latest()->cursor() as $detection) {
                 fputcsv($file, [
                     $detection->lokasi,
                     $detection->waktu_kejadian,
