@@ -11,11 +11,14 @@ class Detection extends Model
 
     protected $fillable = [
         'lokasi',
+        'nama_pelaku',
         'waktu_kejadian',
         'gambar_bukti',
         'jenis_bukti',
+        'kategori_sampah',
         'status_indikasi',
         'status_validasi',
+        'confidence_score',
         'keterangan',
         'tindak_lanjut',
     ];

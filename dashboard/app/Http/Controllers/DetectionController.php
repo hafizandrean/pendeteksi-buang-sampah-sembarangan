@@ -11,108 +11,111 @@ class DetectionController extends Controller
 {
     public function index(Request $request)
     {
-        $today = now()->startOfDay();
 
-        // Stats Hari Ini
-        $todayQuery = Detection::where('waktu_kejadian', '>=', $today)
-            ->where('status_indikasi', 'Mencurigakan');
-            
-        $totalHariIni = $todayQuery->count();
-        $belumTerdenda = (clone $todayQuery)->where('status_validasi', 'Belum divalidasi')->count();
-        $sudahTerdenda = $totalHariIni - $belumTerdenda;
+        $query = Detection::query();
 
-        // Jam tersibuk hari ini
-        $jamTersibuk = '-';
-        $todayDetections = $todayQuery->get(['waktu_kejadian']);
-        if ($todayDetections->isNotEmpty()) {
-            $hours = $todayDetections->map(function ($d) {
-                return $d->waktu_kejadian ? $d->waktu_kejadian->format('H') : null;
-            })->filter()->countBy();
-            
-            if ($hours->isNotEmpty()) {
-                $jamTersibuk = $hours->sortDesc()->keys()->first() . '.00';
+        // Filters
+        if ($request->filled('rentang_waktu')) {
+            if ($request->rentang_waktu == 'Hari Ini') {
+                $query->whereDate('waktu_kejadian', today());
+            } elseif ($request->rentang_waktu == 'Bulan Ini') {
+                $query->whereMonth('waktu_kejadian', today()->month)
+                      ->whereYear('waktu_kejadian', today()->year);
+            } elseif ($request->rentang_waktu == 'Tahun Ini') {
+                $query->whereYear('waktu_kejadian', today()->year);
             }
         }
-
-        // Kategori Usia (Keseluruhan)
-        $anakAnak = Detection::where('status_indikasi', 'Mencurigakan')->where('keterangan', 'LIKE', '%anak%')->count();
-        $remaja = Detection::where('status_indikasi', 'Mencurigakan')->where('keterangan', 'LIKE', '%remaja%')->count();
-        $totalMencurigakan = Detection::where('status_indikasi', 'Mencurigakan')->count();
-        $dewasa = max(0, $totalMencurigakan - $anakAnak - $remaja);
-
-        // Data Table dengan Pagination dan Filter
-        $filter = $request->query('filter', 'semua');
-        
-        $query = Detection::where('status_indikasi', 'Mencurigakan')->latest();
-        
-        if ($filter === 'anak-anak') {
-            $query->where('keterangan', 'LIKE', '%anak%');
-        } elseif ($filter === 'remaja') {
-            $query->where('keterangan', 'LIKE', '%remaja%');
-        } elseif ($filter === 'dewasa') {
-            $query->where(function($q) {
-                $q->where('keterangan', 'LIKE', '%dewasa%')
-                  ->orWhere(function($q2) {
-                      $q2->where('keterangan', 'NOT LIKE', '%anak%')
-                         ->where('keterangan', 'NOT LIKE', '%remaja%');
-                  });
-            });
+        if ($request->filled('lokasi')) {
+            $query->where('lokasi', 'LIKE', '%' . $request->lokasi . '%');
+        }
+        if ($request->filled('status')) {
+            $query->where('status_indikasi', $request->status);
         }
 
-        $detections = $query->paginate(10)->withQueryString();
+        $perPage = $request->input('per_page', 10);
+        $detections = $query->latest()->paginate($perPage)->withQueryString();
+
+        // Overall Stats
+        $totalDeteksi = Detection::count();
+        $lokasiRawanObj = Detection::select('lokasi')->groupBy('lokasi')->orderByRaw('COUNT(*) DESC')->first();
+        $lokasiRawan = $lokasiRawanObj ? $lokasiRawanObj->lokasi : '-';
+        $totalTerverifikasi = Detection::where('status_validasi', 'Valid')->count();
+        $totalFalseDetection = Detection::where('status_validasi', 'False detection')->count();
+
+        // Stats Hari Ini (Unused, removed to save memory)
+
+        // Kategori Sampah
+        $botol = Detection::where('kategori_sampah', 'LIKE', '%Botol%')->count();
+        $plastik = Detection::where('kategori_sampah', 'LIKE', '%Gelas/Plastik%')->count();
+        $lainnya = Detection::where('kategori_sampah', 'Tidak Diketahui')->orWhereNull('kategori_sampah')->count();
 
         return view('dashboard.index', compact(
             'detections',
-            'totalHariIni',
-            'belumTerdenda',
-            'sudahTerdenda',
-            'jamTersibuk',
-            'anakAnak',
-            'remaja',
-            'dewasa',
-            'filter'
+            'totalDeteksi',
+            'lokasiRawan',
+            'totalTerverifikasi',
+            'totalFalseDetection',
+            'botol',
+            'plastik',
+            'lainnya'
         ));
     }
 
     public function create()
     {
-            return view('dashboard.create');
+        return view('dashboard.create');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'lokasi' => 'required|string|max:255',
+            'nama_pelaku' => 'nullable|string|max:255',
             'waktu_kejadian' => 'required|date',
             'gambar_bukti' => 'required|file|mimes:jpg,jpeg,png,mp4,mov,avi,mkv|max:102400',
             'jenis_bukti' => 'required|string|max:255',
             'status_indikasi' => 'nullable|string|max:255',
-            'status_validasi' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
-            'tindak_lanjut' => 'nullable|string',
         ]);
 
         $storedPath = $request->file('gambar_bukti')->store('bukti', 'public');
         $validated['gambar_bukti'] = $storedPath;
 
-        $validated['status_validasi'] = $validated['status_validasi'] ?? 'Belum divalidasi';
-        $validated['status_indikasi'] = $validated['status_indikasi'] ?? 'Normal';
+        $validated['status_validasi'] = 'Belum diverifikasi';
+        $validated['status_indikasi'] = $validated['status_indikasi'] ?? 'Aman';
 
         $absolutePath = storage_path('app/public/'.$storedPath);
         $aiResult = $this->runAiAssistedDetection($absolutePath);
 
         if (($aiResult['status'] ?? '') === 'success') {
-            $isViolation = (bool) ($aiResult['violation'] ?? false);
-            $kategori = (string) ($aiResult['kategori'] ?? 'Umum');
-
-            $validated['status_indikasi'] = $isViolation ? 'Mencurigakan' : 'Normal';
-            $validated['keterangan'] = trim(($validated['keterangan'] ?? '').' | AI kategori: '.$kategori, ' |');
+            $violations = $aiResult['violations'] ?? [];
+            
+            if (empty($violations)) {
+                $validated['status_indikasi'] = 'Aman';
+                $detection = Detection::create($validated);
+                $this->sendTelegramIfNeeded($detection);
+            } else {
+                foreach ($violations as $idx => $v) {
+                    $newValid = $validated;
+                    $newValid['status_indikasi'] = 'Terindikasi membuang sampah';
+                    $newValid['kategori_sampah'] = $v['kategori'] ?? 'Tidak Diketahui';
+                    $newValid['confidence_score'] = $v['confidence_score'] ?? 0;
+                    
+                    if (!empty($v['frame_out_path'])) {
+                        $pathInfo = pathinfo($storedPath);
+                        $newValid['gambar_bukti'] = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_frame_' . ($idx + 1) . '.jpg';
+                    }
+                    
+                    $detection = Detection::create($newValid);
+                    $this->sendTelegramIfNeeded($detection);
+                }
+            }
         } else {
+            $validated['status_indikasi'] = 'Aman';
             $validated['keterangan'] = trim(($validated['keterangan'] ?? '').' | AI gagal dianalisis.', ' |');
+            $detection = Detection::create($validated);
+            $this->sendTelegramIfNeeded($detection);
         }
-
-        $detection = Detection::create($validated);
-        $this->sendTelegramIfNeeded($detection);
 
         return redirect()
             ->route('dashboard.index')
@@ -152,8 +155,11 @@ class DetectionController extends Controller
 
             fputcsv($file, [
                 'Lokasi',
+                'Nama Pelaku',
                 'Waktu Kejadian',
                 'Jenis Bukti',
+                'Kategori Sampah',
+                'Confidence Score',
                 'Status Indikasi',
                 'Status Validasi',
                 'Keterangan',
@@ -163,8 +169,11 @@ class DetectionController extends Controller
             foreach (Detection::latest()->cursor() as $detection) {
                 fputcsv($file, [
                     $detection->lokasi,
+                    $detection->nama_pelaku,
                     $detection->waktu_kejadian,
                     $detection->jenis_bukti,
+                    $detection->kategori_sampah,
+                    $detection->confidence_score ? ($detection->confidence_score * 100) . '%' : '',
                     $detection->status_indikasi,
                     $detection->status_validasi,
                     $detection->keterangan,
@@ -216,7 +225,7 @@ class DetectionController extends Controller
 
     private function sendTelegramIfNeeded(Detection $detection): void
     {
-        if ($detection->status_indikasi !== 'Mencurigakan') {
+        if (!in_array($detection->status_indikasi, ['Mencurigakan', 'Terindikasi membuang sampah', 'Pelanggaran terkonfirmasi'])) {
             return;
         }
 
@@ -231,13 +240,24 @@ class DetectionController extends Controller
         $message = "⚠️ Indikasi pembuangan sampah terdeteksi\n"
             ."Lokasi: {$detection->lokasi}\n"
             ."Waktu: {$detection->waktu_kejadian}\n"
-            ."Status: {$detection->status_indikasi}";
+            ."Status: {$detection->status_indikasi}\n"
+            ."Kategori: {$detection->kategori_sampah}\n"
+            ."Confidence: ".($detection->confidence_score * 100)."%";
 
         try {
-            Http::asForm()->timeout(15)->post("https://api.telegram.org/bot{$token}/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => $message,
-            ]);
+            if ($detection->gambar_bukti && file_exists(storage_path('app/public/' . $detection->gambar_bukti))) {
+                Http::timeout(15)
+                    ->attach('photo', file_get_contents(storage_path('app/public/' . $detection->gambar_bukti)), 'bukti.jpg')
+                    ->post("https://api.telegram.org/bot{$token}/sendPhoto", [
+                        'chat_id' => $chatId,
+                        'caption' => $message,
+                    ]);
+            } else {
+                Http::asForm()->timeout(15)->post("https://api.telegram.org/bot{$token}/sendMessage", [
+                    'chat_id' => $chatId,
+                    'text' => $message,
+                ]);
+            }
         } catch (\Throwable $e) {
             Log::error('Gagal kirim Telegram.', ['error' => $e->getMessage()]);
         }
@@ -254,16 +274,16 @@ class DetectionController extends Controller
 
         $today = now()->startOfDay();
         $detections = Detection::where('waktu_kejadian', '>=', $today)
-            ->where('status_indikasi', 'Mencurigakan')
+            ->whereIn('status_indikasi', ['Mencurigakan', 'Terindikasi membuang sampah', 'Pelanggaran terkonfirmasi'])
             ->get();
 
         $total = $detections->count();
-        $belumTerdenda = $detections->where('status_validasi', 'Belum divalidasi')->count();
+        $belumTerdenda = $detections->where('status_validasi', 'Belum diverifikasi')->count();
 
         $message = "📊 *Ringkasan Pelanggaran Hari Ini*\n\n"
             . "Total pelanggaran: {$total}\n"
-            . "Belum ditindak: {$belumTerdenda}\n\n"
-            . "Mohon segera ditindaklanjuti. Cek detail selengkapnya di sistem SiCCTV Sampah.";
+            . "Belum diverifikasi: {$belumTerdenda}\n\n"
+            . "Mohon segera diverifikasi. Cek detail selengkapnya di sistem SiCCTV Sampah.";
 
         try {
             Http::asForm()->timeout(15)->post("https://api.telegram.org/bot{$token}/sendMessage", [

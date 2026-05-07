@@ -7,19 +7,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b1120;
-            --surface-color: rgba(30, 41, 59, 0.7);
-            --surface-hover: rgba(51, 65, 85, 0.8);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-primary: #3b82f6;
-            --accent-primary-hover: #2563eb;
+            --bg-color: #F4F8F2;
+            --surface-color: rgba(255, 255, 255, 0.85);
+            --surface-hover: rgba(241, 248, 233, 0.95);
+            --border-color: rgba(224, 224, 224, 0.6);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent-primary: #2E7D32;
+            --accent-primary-hover: #1b5e20;
+            --accent-button: #4CAF50;
+            --accent-button-hover: #388e3c;
             --accent-danger: #ef4444;
-            --accent-success: #10b981;
+            --accent-success: #22c55e;
             --accent-warning: #f59e0b;
             --font-family: 'Inter', sans-serif;
             --glass-blur: blur(12px);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
 
         * {
@@ -31,10 +36,6 @@
         body {
             font-family: var(--font-family);
             background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.1) 0px, transparent 50%);
-            background-attachment: fixed;
             color: var(--text-primary);
             min-height: 100vh;
             padding: 2rem;
@@ -49,7 +50,6 @@
             gap: 2rem;
         }
 
-        /* Glassmorphism Panel */
         .glass-panel {
             background: var(--surface-color);
             backdrop-filter: var(--glass-blur);
@@ -57,15 +57,15 @@
             border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
         }
-
+        
         .glass-panel:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
         }
 
-        /* Header Section */
         .header {
             display: flex;
             justify-content: space-between;
@@ -75,9 +75,7 @@
         .header-title h1 {
             font-size: 2rem;
             font-weight: 700;
-            background: linear-gradient(to right, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-primary);
             margin-bottom: 0.25rem;
         }
 
@@ -109,7 +107,7 @@
             font-weight: 600;
             font-size: 0.85rem;
             padding: 0.25rem 0.75rem;
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(229, 57, 53, 0.1);
             border-radius: 9999px;
             animation: pulse 2s infinite;
         }
@@ -122,9 +120,9 @@
         }
 
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(229, 57, 53, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
         }
 
         .btn-group {
@@ -147,31 +145,28 @@
         }
 
         .btn-primary {
-            background-color: var(--accent-primary);
+            background-color: var(--accent-button);
             color: #fff;
-            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+            box-shadow: 0 4px 14px 0 rgba(76, 175, 80, 0.39);
         }
 
         .btn-primary:hover {
-            background-color: var(--accent-primary-hover);
-            transform: translateY(-1px);
+            background-color: var(--accent-button-hover);
         }
 
         .btn-outline {
             background-color: transparent;
-            color: var(--text-primary);
-            border-color: var(--border-color);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
         }
 
         .btn-outline:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(46, 125, 50, 0.05);
         }
 
-        /* Top Summary Grid */
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1.5rem;
         }
 
@@ -181,19 +176,13 @@
             gap: 0.5rem;
             position: relative;
             overflow: hidden;
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-            background: var(--accent-primary);
-            border-radius: 4px 0 0 4px;
+            border-left: 4px solid var(--border-color);
         }
 
-        .stat-card.danger::before { background: var(--accent-danger); }
-        .stat-card.warning::before { background: var(--accent-warning); }
-        .stat-card.success::before { background: var(--accent-success); }
+        .stat-card.primary { border-left-color: var(--accent-primary); }
+        .stat-card.warning { border-left-color: var(--accent-warning); }
+        .stat-card.success { border-left-color: var(--accent-success); }
+        .stat-card.danger { border-left-color: var(--accent-danger); }
 
         .stat-title {
             color: var(--text-secondary);
@@ -204,7 +193,7 @@
         }
 
         .stat-value {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             color: var(--text-primary);
             line-height: 1;
@@ -215,10 +204,9 @@
             color: var(--text-secondary);
         }
 
-        /* Content Grid */
         .content-grid {
             display: grid;
-            grid-template-columns: 1fr 300px;
+            grid-template-columns: 1fr 320px;
             gap: 1.5rem;
         }
 
@@ -228,131 +216,85 @@
             }
         }
 
-        /* Section Titles */
         .section-title {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            color: var(--accent-primary);
         }
 
-        /* Age Categories */
-        .age-list {
+        /* Forms */
+        .filter-form {
             display: flex;
-            flex-direction: column;
             gap: 1rem;
-        }
-
-        .age-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .age-info h4 {
-            font-size: 1rem;
-            font-weight: 500;
-        }
-
-        .age-info p {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .age-count {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--accent-primary);
-        }
-
-        /* Filters */
-        .filter-tabs {
-            display: flex;
-            gap: 0.5rem;
             margin-bottom: 1.25rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.5rem;
+            align-items: center;
         }
-
-        .filter-tab {
-            padding: 0.5rem 1rem;
-            color: var(--text-secondary);
-            font-weight: 500;
+        
+        .filter-form select, .filter-form input {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            background: rgba(255,255,255,0.9);
             font-size: 0.9rem;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .filter-tab:hover {
             color: var(--text-primary);
-            background: rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        
+        .filter-form select:focus, .filter-form input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
         }
 
-        .filter-tab.active {
-            color: var(--accent-primary);
-            background: rgba(59, 130, 246, 0.1);
-        }
-
-        /* Table */
         .table-container {
             overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
 
         table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+            background: rgba(255,255,255,0.5);
         }
 
         th {
             text-align: left;
-            padding: 1rem;
+            padding: 1.25rem 1rem;
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 700;
+            background: rgba(244, 248, 242, 0.8);
         }
 
         td {
-            padding: 1rem;
-            font-size: 0.9rem;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 1.25rem 1rem;
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border-color);
             vertical-align: middle;
+            color: var(--text-primary);
         }
 
         tbody tr {
-            transition: background-color 0.2s;
+            transition: background-color 0.2s ease;
         }
 
         tbody tr:hover {
-            background-color: rgba(255,255,255,0.02);
+            background-color: var(--surface-hover);
         }
 
-        .pelanggar-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.8rem;
+        .thumbnail {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
 
         .badge {
@@ -365,30 +307,10 @@
             font-weight: 500;
         }
 
-        .badge-danger {
-            background: rgba(239, 68, 68, 0.1);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .badge-warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: #fcd34d;
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-
-        .badge-success {
-            background: rgba(16, 185, 129, 0.1);
-            color: #6ee7b7;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .badge-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: currentColor;
-        }
+        .badge-danger { background: rgba(229, 57, 53, 0.1); color: var(--accent-danger); }
+        .badge-warning { background: rgba(251, 140, 0, 0.1); color: var(--accent-warning); }
+        .badge-success { background: rgba(67, 160, 71, 0.1); color: var(--accent-success); }
+        .badge-info { background: rgba(46, 125, 50, 0.1); color: var(--accent-primary); }
 
         .action-link {
             color: var(--accent-primary);
@@ -401,32 +323,107 @@
             text-decoration: underline;
         }
 
-        /* Notifikasi Section */
-        .notification-card {
+        .sidebar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .sidebar-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(to right, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
-            border-left: 4px solid var(--accent-primary);
+            padding: 1rem;
+            background: #f9fbf9;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
 
-        .notif-info p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-top: 0.25rem;
+        .sidebar-item h4 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
         }
+
+        .sidebar-count {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+        
+        .latest-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .latest-info p {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Modern Pagination CSS */
+        .pagination {
+            display: flex;
+            list-style: none;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .page-item .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 0.5rem;
+            border-radius: 8px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .page-item.active .page-link {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+        }
+
+        .page-item:not(.active):not(.disabled) .page-link:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            transform: translateY(-1px);
+        }
+
+        .page-item.disabled .page-link {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f8fafc;
+        }
+
     </style>
 </head>
 <body>
-
-
 
     <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="header-title">
                 <h1>SiCCTV Sampah</h1>
-                <p>Sistem Monitoring Pembuang Sampah Sembarangan</p>
+                <p>Sistem Monitoring Pertanian & Lingkungan</p>
             </div>
             <div class="header-actions">
                 <div class="time-live">
@@ -448,40 +445,40 @@
         </header>
 
         @if (session('success'))
-            <div style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.5); padding: 1rem; border-radius: 8px; color: #6ee7b7;">
+            <div style="background: rgba(67, 160, 71, 0.1); border: 1px solid var(--accent-success); padding: 1rem; border-radius: 8px; color: var(--accent-success);">
                 {{ session('success') }}
             </div>
         @endif
 
         @if (session('error'))
-            <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); padding: 1rem; border-radius: 8px; color: #fca5a5;">
+            <div style="background: rgba(229, 57, 53, 0.1); border: 1px solid var(--accent-danger); padding: 1rem; border-radius: 8px; color: var(--accent-danger);">
                 {{ session('error') }}
             </div>
         @endif
 
         <!-- Summary Cards -->
         <section>
-            <h2 class="section-title">RINGKASAN HARI INI</h2>
+            <h2 class="section-title">STATISTIK DASHBOARD</h2>
             <div class="summary-grid">
-                <div class="glass-panel stat-card danger">
-                    <span class="stat-title">Total pelanggaran</span>
-                    <span class="stat-value">{{ $totalHariIni }}</span>
-                    <span class="stat-desc">Hari ini</span>
-                </div>
                 <div class="glass-panel stat-card warning">
-                    <span class="stat-title">Belum terdenda</span>
-                    <span class="stat-value">{{ $belumTerdenda }}</span>
-                    <span class="stat-desc">Menunggu tindakan</span>
+                    <span class="stat-title">Total Deteksi</span>
+                    <span class="stat-value">{{ $totalDeteksi }}</span>
+                    <span class="stat-desc">Keseluruhan data</span>
+                </div>
+                <div class="glass-panel stat-card primary">
+                    <span class="stat-title">Lokasi Rawan</span>
+                    <span class="stat-value" style="font-size: 1.5rem; line-height: 1.3;">{{ $lokasiRawan }}</span>
+                    <span class="stat-desc">Paling sering dilanggar</span>
                 </div>
                 <div class="glass-panel stat-card success">
-                    <span class="stat-title">Sudah terdenda</span>
-                    <span class="stat-value">{{ $sudahTerdenda }}</span>
-                    <span class="stat-desc">Terkirim ke RT</span>
+                    <span class="stat-title">Terverifikasi Valid</span>
+                    <span class="stat-value">{{ $totalTerverifikasi }}</span>
+                    <span class="stat-desc">Pelanggaran dikonfirmasi</span>
                 </div>
-                <div class="glass-panel stat-card">
-                    <span class="stat-title">Jam tersibuk</span>
-                    <span class="stat-value">{{ $jamTersibuk }}</span>
-                    <span class="stat-desc">Paling banyak kejadian</span>
+                <div class="glass-panel stat-card danger">
+                    <span class="stat-title">False Detection</span>
+                    <span class="stat-value">{{ $totalFalseDetection }}</span>
+                    <span class="stat-desc">Deteksi keliru oleh AI</span>
                 </div>
             </div>
         </section>
@@ -489,74 +486,100 @@
         <!-- Main Content Grid -->
         <div class="content-grid">
             <!-- Data Table -->
-            <section class="glass-panel">
+            <section class="glass-panel" style="overflow: hidden;">
                 <h2 class="section-title">DATA PELANGGARAN</h2>
-                <div class="filter-tabs">
-                    <a href="{{ route('dashboard.index', ['filter' => 'semua']) }}" class="filter-tab {{ $filter === 'semua' ? 'active' : '' }}" style="text-decoration:none;">Semua</a>
-                    <a href="{{ route('dashboard.index', ['filter' => 'anak-anak']) }}" class="filter-tab {{ $filter === 'anak-anak' ? 'active' : '' }}" style="text-decoration:none;">Anak-anak</a>
-                    <a href="{{ route('dashboard.index', ['filter' => 'remaja']) }}" class="filter-tab {{ $filter === 'remaja' ? 'active' : '' }}" style="text-decoration:none;">Remaja</a>
-                    <a href="{{ route('dashboard.index', ['filter' => 'dewasa']) }}" class="filter-tab {{ $filter === 'dewasa' ? 'active' : '' }}" style="text-decoration:none;">Dewasa</a>
-                </div>
+                
+                <form class="filter-form" method="GET" action="{{ route('dashboard.index') }}" style="flex-wrap: wrap;">
+                    <select name="rentang_waktu">
+                        <option value="">Semua Waktu</option>
+                        <option value="Hari Ini" {{ request('rentang_waktu') == 'Hari Ini' ? 'selected' : '' }}>Hari Ini</option>
+                        <option value="Bulan Ini" {{ request('rentang_waktu') == 'Bulan Ini' ? 'selected' : '' }}>Bulan Ini</option>
+                        <option value="Tahun Ini" {{ request('rentang_waktu') == 'Tahun Ini' ? 'selected' : '' }}>Tahun Ini</option>
+                    </select>
+                    <input type="text" name="lokasi" value="{{ request('lokasi') }}" placeholder="Cari Lokasi..." style="flex-grow: 1; min-width: 200px;">
+                    <select name="status">
+                        <option value="">Semua Status</option>
+                        <option value="Aman" {{ request('status') == 'Aman' ? 'selected' : '' }}>Aman</option>
+                        <option value="Terindikasi membuang sampah" {{ request('status') == 'Terindikasi membuang sampah' ? 'selected' : '' }}>Terindikasi membuang sampah</option>
+                        <option value="Mencurigakan" {{ request('status') == 'Mencurigakan' ? 'selected' : '' }}>Mencurigakan</option>
+                    </select>
+                    <select name="per_page">
+                        <option value="10" {{ request('per_page') == '10' ? 'selected' : '' }}>10 Baris</option>
+                        <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Baris</option>
+                        <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 Baris</option>
+                        <option value="500" {{ request('per_page') == '500' ? 'selected' : '' }}>500 Baris</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.25rem;">Filter</button>
+                    <a href="{{ route('dashboard.index') }}" class="btn btn-outline" style="padding: 0.6rem 1.25rem;">Reset</a>
+                </form>
+
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>Pelanggar</th>
-                                <th>Waktu</th>
-                                <th>Lokasi CCTV</th>
-                                <th>Perkiraan Usia</th>
-                                <th>Kategori</th>
-                                <th>Status</th>
+                                <th>Bukti</th>
+                                <th>Pelaku / Waktu</th>
+                                <th>Lokasi</th>
+                                <th>Kategori / AI Score</th>
+                                <th>Status AI</th>
+                                <th>Status Verifikasi</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($detections as $item)
-                                @php
-                                    $ket = strtolower($item->keterangan ?? '');
-                                    $kategori = 'Dewasa';
-                                    $usia = '25 th';
-                                    
-                                    if (str_contains($ket, 'anak')) {
-                                        $kategori = 'Anak-anak';
-                                        $usia = '8 th';
-                                    } elseif (str_contains($ket, 'remaja')) {
-                                        $kategori = 'Remaja';
-                                        $usia = '15 th';
-                                    } elseif (str_contains($ket, 'dewasa')) {
-                                        $kategori = 'Dewasa';
-                                        $usia = '35 th';
-                                    }
-
-                                    $isTerdenda = $item->status_validasi !== 'Belum divalidasi';
-                                @endphp
                                 <tr>
                                     <td>
-                                        <div class="pelanggar-info">
-                                            <div class="avatar">W</div>
-                                            <span>Warga Terdeteksi</span>
-                                        </div>
-                                    </td>
-                                    <td>{{ $item->waktu_kejadian ? $item->waktu_kejadian->format('H.i.s') : '-' }}</td>
-                                    <td>{{ $item->lokasi }}</td>
-                                    <td>{{ $usia }}</td>
-                                    <td>Umum</td>
-                                    <td>
-                                        @if($isTerdenda)
-                                            <span class="badge badge-success">
-                                                <span class="badge-dot"></span> Sudah Terdenda
-                                            </span>
+                                        @if($item->gambar_bukti)
+                                            @php
+                                                $ext = strtolower(pathinfo($item->gambar_bukti, PATHINFO_EXTENSION));
+                                            @endphp
+                                            @if(in_array($ext, ['mp4', 'mov', 'avi', 'mkv']))
+                                                <video src="{{ asset('storage/'.$item->gambar_bukti) }}" class="thumbnail" muted></video>
+                                            @else
+                                                <img src="{{ asset('storage/'.$item->gambar_bukti) }}" class="thumbnail" alt="Bukti">
+                                            @endif
                                         @else
-                                            <span class="badge badge-warning">
-                                                <span class="badge-dot"></span> Belum Terdenda
-                                            </span>
+                                            <div class="thumbnail" style="background:#eee; display:flex; align-items:center; justify-content:center; color:#999; font-size:10px;">No Image</div>
                                         @endif
                                     </td>
-                                    <td><a href="{{ route('dashboard.show', $item->id) }}" class="action-link">Detail</a></td>
+                                    <td>
+                                        <div style="font-weight:600; color:var(--text-primary)">{{ $item->nama_pelaku ?? 'Tidak Diketahui' }}</div>
+                                        <div style="font-size:0.8rem; color:var(--text-secondary)">{{ $item->waktu_kejadian ? $item->waktu_kejadian->format('d M Y H:i') : '-' }}</div>
+                                    </td>
+                                    <td>{{ $item->lokasi }}</td>
+                                    <td>
+                                        <div>{{ $item->kategori_sampah ?? '-' }}</div>
+                                        @if($item->confidence_score)
+                                            <div style="font-size:0.8rem; color:var(--accent-warning); font-weight:600;">Conf: {{ $item->confidence_score * 100 }}%</div>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(in_array($item->status_indikasi, ['Terindikasi membuang sampah', 'Mencurigakan']))
+                                            <span class="badge badge-danger">{{ $item->status_indikasi }}</span>
+                                        @else
+                                            <span class="badge badge-success">{{ $item->status_indikasi }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($item->status_validasi == 'Valid')
+                                            <span class="badge badge-success">Valid</span>
+                                        @elseif($item->status_validasi == 'False detection')
+                                            <span class="badge badge-danger">False</span>
+                                        @else
+                                            <span class="badge badge-warning">Belum diverifikasi</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('dashboard.show', $item->id) }}" class="action-link">Detail & Verifikasi</a>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" style="text-align: center; color: var(--text-secondary);">Belum ada data pelanggaran hari ini.</td>
+                                    <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                        <svg style="width:48px; height:48px; margin:0 auto 1rem auto; display:block; opacity:0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Tidak ada pelanggaran yang ditemukan sesuai filter saat ini.
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -569,48 +592,66 @@
 
             <!-- Sidebar -->
             <aside style="display: flex; flex-direction: column; gap: 1.5rem;">
+                
+                @php
+                    $latest = App\Models\Detection::latest('waktu_kejadian')->first();
+                @endphp
+                @if($latest)
+                <div class="glass-panel latest-card">
+                    <h2 class="section-title">Deteksi Terakhir</h2>
+                    @if($latest->gambar_bukti)
+                        @php
+                            $ext = strtolower(pathinfo($latest->gambar_bukti, PATHINFO_EXTENSION));
+                        @endphp
+                        @if(in_array($ext, ['mp4', 'mov', 'avi', 'mkv']))
+                            <video src="{{ asset('storage/'.$latest->gambar_bukti) }}" muted style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;"></video>
+                        @else
+                            <img src="{{ asset('storage/'.$latest->gambar_bukti) }}" alt="Terakhir">
+                        @endif
+                    @endif
+                    <div class="latest-info">
+                        <p><strong>Waktu:</strong> {{ $latest->waktu_kejadian ? $latest->waktu_kejadian->format('d M Y H:i:s') : '-' }}</p>
+                        <p><strong>Lokasi:</strong> {{ $latest->lokasi }}</p>
+                        <p><strong>Status:</strong> <span style="color:var(--accent-warning)">{{ $latest->status_indikasi }}</span></p>
+                    </div>
+                    <a href="{{ route('dashboard.show', $latest->id) }}" class="btn btn-outline" style="width:100%; text-align:center;">Lihat Detail</a>
+                </div>
+                @endif
+
                 <div class="glass-panel">
-                    <h2 class="section-title">Kategori usia pelanggar</h2>
-                    <div class="age-list">
-                        <div class="age-item">
-                            <div class="age-info">
-                                <h4>Anak-anak</h4>
-                                <p>5-12 tahun</p>
-                            </div>
-                            <span class="age-count">{{ $anakAnak }}</span>
+                    <h2 class="section-title">Kategori Sampah</h2>
+                    <div class="sidebar-list">
+                        <div class="sidebar-item">
+                            <h4>Botol</h4>
+                            <span class="sidebar-count">{{ $botol }}</span>
                         </div>
-                        <div class="age-item">
-                            <div class="age-info">
-                                <h4>Remaja</h4>
-                                <p>13-17 tahun</p>
-                            </div>
-                            <span class="age-count">{{ $remaja }}</span>
+                        <div class="sidebar-item">
+                            <h4>Plastik/Gelas</h4>
+                            <span class="sidebar-count">{{ $plastik }}</span>
                         </div>
-                        <div class="age-item">
-                            <div class="age-info">
-                                <h4>Dewasa</h4>
-                                <p>18-59 tahun</p>
-                            </div>
-                            <span class="age-count">{{ $dewasa }}</span>
+                        <div class="sidebar-item">
+                            <h4>Lainnya</h4>
+                            <span class="sidebar-count">{{ $lainnya }}</span>
                         </div>
                     </div>
                 </div>
+
+                <div class="glass-panel notification-card" style="flex-direction:column; align-items:flex-start; gap:1rem;">
+                    <div class="notif-info">
+                        <h2 class="section-title" style="margin-bottom: 0;">Notifikasi Ketua RT</h2>
+                        <p>Penerima: Bapak Suyono — RT 05 / RW 02</p>
+                    </div>
+                    <form action="{{ route('dashboard.send-summary') }}" method="POST" style="margin: 0; width:100%">
+                        @csrf
+                        <button type="submit" class="btn btn-primary" style="width:100%">
+                            Kirim Ringkasan Hari Ini
+                        </button>
+                    </form>
+                </div>
+
             </aside>
         </div>
 
-        <!-- Notification RT -->
-        <section class="glass-panel notification-card">
-            <div class="notif-info">
-                <h2 class="section-title" style="margin-bottom: 0;">Notifikasi Ketua RT</h2>
-                <p>Penerima: Bapak Suyono — RT 05 / RW 02</p>
-            </div>
-            <form action="{{ route('dashboard.send-summary') }}" method="POST" style="margin: 0;">
-                @csrf
-                <button type="submit" class="btn btn-primary">
-                    Kirim semua laporan ke RT
-                </button>
-            </form>
-        </section>
     </div>
 
     <script>
