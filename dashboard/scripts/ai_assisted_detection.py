@@ -7,7 +7,15 @@ def detect_with_yolo(file_path: str) -> dict:
     from ultralytics import YOLO
     import cv2
 
-    model = YOLO("yolov8n.pt")
+    # Fallback logika model
+    if os.path.exists("best.pt"):
+        model = YOLO("best.pt")
+        is_custom_model = True
+        model_version = "YOLOv8 Custom Trash v1"
+    else:
+        model = YOLO("yolov8n.pt")
+        is_custom_model = False
+        model_version = "YOLOv8 COCO"
 
     ext = os.path.splitext(file_path)[1].lower()
     image_ext = {".jpg", ".jpeg", ".png"}
@@ -25,23 +33,44 @@ def detect_with_yolo(file_path: str) -> dict:
             for box in result.boxes:
                 cls = int(box.cls[0])
                 conf = float(box.conf[0])
-                if cls == 0:
-                    frame_has_person = True
-                elif cls in [24, 26, 39, 41]:
-                    if conf > frame_trash_conf: frame_trash_conf = conf
-                    if cls == 39: frame_cats.add('Botol')
-                    elif cls in [24, 26]: frame_cats.add('Tas/Kantong Plastik')
-                    elif cls == 41: frame_cats.add('Gelas/Plastik')
+                
+                # Abaikan deteksi dengan confidence di bawah 30%
+                if conf < 0.30:
+                    continue
+
+                if is_custom_model:
+                    # Custom model: 0 = person, 1 = trash
+                    if cls == 0:
+                        frame_has_person = True
+                    elif cls == 1:
+                        if conf > frame_trash_conf: frame_trash_conf = conf
+                else:
+                    # COCO model: 0 = person, 39 = bottle, 41 = cup
+                    if cls == 0:
+                        frame_has_person = True
+                    elif cls in [39, 41]:
+                        if conf > frame_trash_conf: frame_trash_conf = conf
         
-        if frame_has_person and frame_trash_conf > 0:
+        # Logika Status AI Baru:
+        # Hanya naik status jika ada Person DAN Trash >= 30%
+        if frame_has_person and frame_trash_conf >= 0.30:
+            if frame_trash_conf >= 0.65:
+                status_indikasi = "Terindikasi membuang sampah"
+                kategori_str = "Indikasi sampah"
+            else:
+                status_indikasi = "Perlu validasi"
+                kategori_str = "Objek mencurigakan"
+                
             base, _ = os.path.splitext(file_path)
             out_path = f"{base}_frame_1.jpg"
-            cv2.imwrite(out_path, results[0].plot())
-            kategori_str = ", ".join(frame_cats) if frame_cats else "Tidak Diketahui"
+            # Sembunyikan raw label yolo
+            cv2.imwrite(out_path, results[0].plot(labels=False))
+            
             output_violations.append({
                 "kategori": kategori_str,
                 "confidence_score": round(frame_trash_conf, 2),
-                "frame_out_path": out_path
+                "frame_out_path": out_path,
+                "status_indikasi": status_indikasi
             })
 
     elif ext in video_ext:
@@ -74,25 +103,28 @@ def detect_with_yolo(file_path: str) -> dict:
                 for box in result.boxes:
                     cls = int(box.cls[0])
                     conf = float(box.conf[0])
-                    if cls == 0:
-                        frame_has_person = True
-                    elif cls in [24, 26, 39, 41]:
-                        if conf > frame_trash_conf:
-                            frame_trash_conf = conf
-                        if cls == 39:
-                            frame_cats.add('Botol')
-                        elif cls in [24, 26]:
-                            frame_cats.add('Tas/Kantong Plastik')
-                        elif cls == 41:
-                            frame_cats.add('Gelas/Plastik')
+                    
+                    if conf < 0.30:
+                        continue
 
-            if frame_has_person and frame_trash_conf > 0:
+                    if is_custom_model:
+                        if cls == 0:
+                            frame_has_person = True
+                        elif cls == 1:
+                            if conf > frame_trash_conf: frame_trash_conf = conf
+                    else:
+                        if cls == 0:
+                            frame_has_person = True
+                        elif cls in [39, 41]:
+                            if conf > frame_trash_conf: frame_trash_conf = conf
+
+            if frame_has_person and frame_trash_conf >= 0.30:
                 in_event = True
                 no_violation_frames = 0
-                event_categories.update(frame_cats)
-                if frame_trash_conf > event_best_conf:
+                
+                if frame_trash_conf > event_best_conf or event_best_frame is None:
                     event_best_conf = frame_trash_conf
-                    event_best_frame = results[0].plot()
+                    event_best_frame = results[0].plot(labels=False)
             else:
                 if in_event:
                     no_violation_frames += 1
@@ -122,18 +154,28 @@ def detect_with_yolo(file_path: str) -> dict:
         for i, v in enumerate(violations_list):
             out_path = f"{base}_frame_{i+1}.jpg"
             cv2.imwrite(out_path, v["best_frame"])
-            kategori_str = ", ".join(v["categories"]) if v["categories"] else "Tidak Diketahui"
+            
+            # Tentukan status indikasi dan kategori
+            if v["confidence"] >= 0.65:
+                status_indikasi = "Terindikasi membuang sampah"
+                kategori_str = "Indikasi sampah"
+            else:
+                status_indikasi = "Perlu validasi"
+                kategori_str = "Objek mencurigakan"
+
             output_violations.append({
                 "kategori": kategori_str,
                 "confidence_score": round(v["confidence"], 2),
-                "frame_out_path": out_path
+                "frame_out_path": out_path,
+                "status_indikasi": status_indikasi
             })
     else:
         return {"status": "error", "message": "Format file tidak didukung"}
 
     return {
         "status": "success",
-        "violations": output_violations
+        "violations": output_violations,
+        "model_version": model_version
     }
 
 

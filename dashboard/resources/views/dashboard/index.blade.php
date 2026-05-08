@@ -7,19 +7,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #F4F8F2;
-            --surface-color: rgba(255, 255, 255, 0.85);
-            --surface-hover: rgba(241, 248, 233, 0.95);
-            --border-color: rgba(224, 224, 224, 0.6);
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --accent-primary: #2E7D32;
-            --accent-primary-hover: #1b5e20;
-            --accent-button: #4CAF50;
-            --accent-button-hover: #388e3c;
-            --accent-danger: #ef4444;
-            --accent-success: #22c55e;
-            --accent-warning: #f59e0b;
+            --bg-color: #EEF2EC;
+            --surface-color: #FFFFFF;
+            --surface-hover: #F8FAF9;
+            --border-color: #E2E8F0;
+            --text-primary: #1F2937;
+            --text-secondary: #4B5563;
+            --accent-primary: #1E3A2F;
+            --accent-primary-hover: #132720;
+            --accent-button: #2E7D32;
+            --accent-button-hover: #1b5e20;
+            --accent-danger: #DC2626;
+            --accent-success: #10B981;
+            --accent-warning: #F59E0B;
+            --accent-info: #3B82F6;
             --font-family: 'Inter', sans-serif;
             --glass-blur: blur(12px);
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -295,6 +296,44 @@
             object-fit: cover;
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+        .modal-content img, .modal-content video {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-close {
+            position: absolute;
+            top: -40px; right: 0;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            background: none;
+            border: none;
         }
 
         .badge {
@@ -423,7 +462,7 @@
         <header class="header">
             <div class="header-title">
                 <h1>SiCCTV Sampah</h1>
-                <p>Sistem Monitoring Pertanian & Lingkungan</p>
+                <p>Sistem Monitoring Pembuangan Sampah</p>
             </div>
             <div class="header-actions">
                 <div class="time-live">
@@ -458,25 +497,28 @@
 
         <!-- Summary Cards -->
         <section>
-            <h2 class="section-title">STATISTIK DASHBOARD</h2>
+            <h2 class="section-title">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:text-bottom; margin-right:4px;"><path d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                STATISTIK DASHBOARD
+            </h2>
             <div class="summary-grid">
                 <div class="glass-panel stat-card warning">
-                    <span class="stat-title">Total Deteksi</span>
+                    <span class="stat-title">Total Laporan Deteksi</span>
                     <span class="stat-value">{{ $totalDeteksi }}</span>
                     <span class="stat-desc">Keseluruhan data</span>
                 </div>
                 <div class="glass-panel stat-card primary">
-                    <span class="stat-title">Lokasi Rawan</span>
+                    <span class="stat-title">Lokasi Paling Rawan</span>
                     <span class="stat-value" style="font-size: 1.5rem; line-height: 1.3;">{{ $lokasiRawan }}</span>
                     <span class="stat-desc">Paling sering dilanggar</span>
                 </div>
                 <div class="glass-panel stat-card success">
-                    <span class="stat-title">Terverifikasi Valid</span>
+                    <span class="stat-title">Pelanggaran Terkonfirmasi</span>
                     <span class="stat-value">{{ $totalTerverifikasi }}</span>
                     <span class="stat-desc">Pelanggaran dikonfirmasi</span>
                 </div>
                 <div class="glass-panel stat-card danger">
-                    <span class="stat-title">False Detection</span>
+                    <span class="stat-title">Deteksi Tidak Valid</span>
                     <span class="stat-value">{{ $totalFalseDetection }}</span>
                     <span class="stat-desc">Deteksi keliru oleh AI</span>
                 </div>
@@ -487,7 +529,10 @@
         <div class="content-grid">
             <!-- Data Table -->
             <section class="glass-panel" style="overflow: hidden;">
-                <h2 class="section-title">DATA PELANGGARAN</h2>
+                <h2 class="section-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:text-bottom; margin-right:4px;"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    DATA PELANGGARAN
+                </h2>
                 
                 <form class="filter-form" method="GET" action="{{ route('dashboard.index') }}" style="flex-wrap: wrap;">
                     <select name="rentang_waktu">
@@ -496,14 +541,15 @@
                         <option value="Bulan Ini" {{ request('rentang_waktu') == 'Bulan Ini' ? 'selected' : '' }}>Bulan Ini</option>
                         <option value="Tahun Ini" {{ request('rentang_waktu') == 'Tahun Ini' ? 'selected' : '' }}>Tahun Ini</option>
                     </select>
+                    <input type="date" name="tanggal" value="{{ request('tanggal') }}" title="Pilih Tanggal">
                     <input type="text" name="lokasi" value="{{ request('lokasi') }}" placeholder="Cari Lokasi..." style="flex-grow: 1; min-width: 200px;">
                     <select name="status">
                         <option value="">Semua Status</option>
-                        <option value="Aman" {{ request('status') == 'Aman' ? 'selected' : '' }}>Aman</option>
+                        <option value="Tidak terindikasi" {{ request('status') == 'Tidak terindikasi' ? 'selected' : '' }}>Tidak terindikasi</option>
+                        <option value="Perlu validasi" {{ request('status') == 'Perlu validasi' ? 'selected' : '' }}>Perlu validasi</option>
                         <option value="Terindikasi membuang sampah" {{ request('status') == 'Terindikasi membuang sampah' ? 'selected' : '' }}>Terindikasi membuang sampah</option>
-                        <option value="Mencurigakan" {{ request('status') == 'Mencurigakan' ? 'selected' : '' }}>Mencurigakan</option>
                     </select>
-                    <select name="per_page">
+                    <select name="per_page" onchange="this.form.submit()">
                         <option value="10" {{ request('per_page') == '10' ? 'selected' : '' }}>10 Baris</option>
                         <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Baris</option>
                         <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 Baris</option>
@@ -518,9 +564,9 @@
                         <thead>
                             <tr>
                                 <th>Bukti</th>
-                                <th>Pelaku / Waktu</th>
+                                <th>Identitas Pelaku / Waktu</th>
                                 <th>Lokasi</th>
-                                <th>Kategori / AI Score</th>
+                                <th>Hasil Deteksi</th>
                                 <th>Status AI</th>
                                 <th>Status Verifikasi</th>
                                 <th>Aksi</th>
@@ -535,28 +581,30 @@
                                                 $ext = strtolower(pathinfo($item->gambar_bukti, PATHINFO_EXTENSION));
                                             @endphp
                                             @if(in_array($ext, ['mp4', 'mov', 'avi', 'mkv']))
-                                                <video src="{{ asset('storage/'.$item->gambar_bukti) }}" class="thumbnail" muted></video>
+                                                <video src="{{ asset('storage/'.$item->gambar_bukti) }}" class="thumbnail" onclick="openModal('video', '{{ asset('storage/'.$item->gambar_bukti) }}')" muted></video>
                                             @else
-                                                <img src="{{ asset('storage/'.$item->gambar_bukti) }}" class="thumbnail" alt="Bukti">
+                                                <img src="{{ asset('storage/'.$item->gambar_bukti) }}" class="thumbnail" onclick="openModal('img', '{{ asset('storage/'.$item->gambar_bukti) }}')" alt="Bukti">
                                             @endif
                                         @else
                                             <div class="thumbnail" style="background:#eee; display:flex; align-items:center; justify-content:center; color:#999; font-size:10px;">No Image</div>
                                         @endif
                                     </td>
                                     <td>
-                                        <div style="font-weight:600; color:var(--text-primary)">{{ $item->nama_pelaku ?? 'Tidak Diketahui' }}</div>
+                                        <div style="font-weight:600; color:var(--text-primary)">{{ $item->nama_pelaku ?? 'Belum diketahui' }}</div>
                                         <div style="font-size:0.8rem; color:var(--text-secondary)">{{ $item->waktu_kejadian ? $item->waktu_kejadian->format('d M Y H:i') : '-' }}</div>
                                     </td>
                                     <td>{{ $item->lokasi }}</td>
                                     <td>
                                         <div>{{ $item->kategori_sampah ?? '-' }}</div>
                                         @if($item->confidence_score)
-                                            <div style="font-size:0.8rem; color:var(--accent-warning); font-weight:600;">Conf: {{ $item->confidence_score * 100 }}%</div>
+                                            <div style="font-size:0.8rem; color:var(--accent-warning); font-weight:600;">Keyakinan: {{ $item->confidence_score * 100 }}%</div>
                                         @endif
                                     </td>
                                     <td>
-                                        @if(in_array($item->status_indikasi, ['Terindikasi membuang sampah', 'Mencurigakan']))
+                                        @if($item->status_indikasi == 'Terindikasi membuang sampah')
                                             <span class="badge badge-danger">{{ $item->status_indikasi }}</span>
+                                        @elseif(in_array($item->status_indikasi, ['Mencurigakan', 'Perlu validasi']))
+                                            <span class="badge badge-warning">{{ $item->status_indikasi }}</span>
                                         @else
                                             <span class="badge badge-success">{{ $item->status_indikasi }}</span>
                                         @endif
@@ -598,7 +646,10 @@
                 @endphp
                 @if($latest)
                 <div class="glass-panel latest-card">
-                    <h2 class="section-title">Deteksi Terakhir</h2>
+                    <h2 class="section-title">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:text-bottom; margin-right:4px;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Deteksi Terakhir
+                    </h2>
                     @if($latest->gambar_bukti)
                         @php
                             $ext = strtolower(pathinfo($latest->gambar_bukti, PATHINFO_EXTENSION));
@@ -617,6 +668,23 @@
                     <a href="{{ route('dashboard.show', $latest->id) }}" class="btn btn-outline" style="width:100%; text-align:center;">Lihat Detail</a>
                 </div>
                 @endif
+
+                <div class="glass-panel" style="border-left: 4px solid var(--accent-info);">
+                    <h2 class="section-title">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:text-bottom; margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Jam Tersibuk
+                    </h2>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-size:2rem; font-weight:700; color:var(--text-primary);">{{ $jamTersibuk }}</div>
+                            <div style="font-size:0.85rem; color:var(--text-secondary);">Waktu Paling Rawan</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:1.5rem; font-weight:600; color:var(--accent-info);">{{ $totalJamTersibuk }}</div>
+                            <div style="font-size:0.85rem; color:var(--text-secondary);">Pelanggaran</div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="glass-panel">
                     <h2 class="section-title">Kategori Sampah</h2>
@@ -654,7 +722,31 @@
 
     </div>
 
+    <!-- Modal Image Viewer -->
+    <div id="mediaModal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
     <script>
+        function openModal(type, src) {
+            const modal = document.getElementById('mediaModal');
+            const body = document.getElementById('modalBody');
+            if (type === 'video') {
+                body.innerHTML = `<video src="${src}" controls autoplay loop></video>`;
+            } else {
+                body.innerHTML = `<img src="${src}" alt="Bukti Full">`;
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('mediaModal').style.display = 'none';
+            document.getElementById('modalBody').innerHTML = '';
+        }
+
         // Update Live Time
         function updateTime() {
             const now = new Date();

@@ -19,6 +19,7 @@ class Detection extends Model
         'status_indikasi',
         'status_validasi',
         'confidence_score',
+        'model_version',
         'keterangan',
         'tindak_lanjut',
     ];

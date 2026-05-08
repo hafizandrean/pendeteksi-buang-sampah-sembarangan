@@ -139,6 +139,47 @@
             flex-direction: column;
             align-items: flex-start;
         }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(46, 125, 50, 0.2);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .loading-subtext {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -159,7 +200,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('dashboard.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="uploadForm" action="{{ route('dashboard.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="field">
                     <label for="lokasi">Lokasi Kejadian <span style="color:red">*</span></label>
@@ -167,7 +208,7 @@
                 </div>
 
                 <div class="field">
-                    <label for="nama_pelaku">Nama Pelaku (Opsional)</label>
+                    <label for="nama_pelaku">Identitas Pelaku (Opsional)</label>
                     <input id="nama_pelaku" name="nama_pelaku" type="text" value="{{ old('nama_pelaku') }}" placeholder="Bisa dikosongkan jika tidak diketahui">
                 </div>
 
@@ -180,7 +221,7 @@
                 </div>
 
                 <div class="field">
-                    <label for="jenis_bukti">Jenis Bukti <span style="color:red">*</span></label>
+                    <label for="jenis_bukti">Jenis File Bukti <span style="color:red">*</span></label>
                     <select id="jenis_bukti" name="jenis_bukti" required>
                         <option value="Screenshot" @selected(old('jenis_bukti') === 'Screenshot')>Screenshot CCTV</option>
                         <option value="Rekaman" @selected(old('jenis_bukti') === 'Rekaman')>Rekaman CCTV</option>
@@ -198,9 +239,16 @@
                     <textarea id="keterangan" name="keterangan" rows="4" placeholder="Tambahkan catatan jika diperlukan...">{{ old('keterangan') }}</textarea>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Analisis Menggunakan AI & Simpan</button>
+                <button type="submit" class="btn btn-primary">Proses Deteksi & Simpan</button>
             </form>
         </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">AI Sedang Menganalisis...</div>
+        <div class="loading-subtext">Mohon tunggu sebentar, proses ini memakan waktu beberapa detik tergantung ukuran file.</div>
     </div>
 
     <script>
@@ -216,6 +264,13 @@
             const localDatetime = `${year}-${month}-${day}T${hours}:${minutes}`;
             document.getElementById('waktu_kejadian').value = localDatetime;
         }
+
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            // Jika form valid, tampilkan loading overlay
+            if (this.checkValidity()) {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+        });
     </script>
 </body>
 </html>

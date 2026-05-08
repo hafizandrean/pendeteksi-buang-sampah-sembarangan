@@ -15,7 +15,9 @@ class DetectionController extends Controller
         $query = Detection::query();
 
         // Filters
-        if ($request->filled('rentang_waktu')) {
+        if ($request->filled('tanggal')) {
+            $query->whereDate('waktu_kejadian', $request->tanggal);
+        } elseif ($request->filled('rentang_waktu')) {
             if ($request->rentang_waktu == 'Hari Ini') {
                 $query->whereDate('waktu_kejadian', today());
             } elseif ($request->rentang_waktu == 'Bulan Ini') {
@@ -49,6 +51,16 @@ class DetectionController extends Controller
         $plastik = Detection::where('kategori_sampah', 'LIKE', '%Gelas/Plastik%')->count();
         $lainnya = Detection::where('kategori_sampah', 'Tidak Diketahui')->orWhereNull('kategori_sampah')->count();
 
+        // Jam Tersibuk
+        $jamTersibukObj = Detection::selectRaw('HOUR(waktu_kejadian) as jam, COUNT(*) as total')
+            ->whereNotNull('waktu_kejadian')
+            ->groupBy('jam')
+            ->orderByDesc('total')
+            ->first();
+            
+        $jamTersibuk = $jamTersibukObj ? str_pad($jamTersibukObj->jam, 2, '0', STR_PAD_LEFT) . ':00' : '-';
+        $totalJamTersibuk = $jamTersibukObj ? $jamTersibukObj->total : 0;
+
         return view('dashboard.index', compact(
             'detections',
             'totalDeteksi',
@@ -57,7 +69,9 @@ class DetectionController extends Controller
             'totalFalseDetection',
             'botol',
             'plastik',
-            'lainnya'
+            'lainnya',
+            'jamTersibuk',
+            'totalJamTersibuk'
         ));
     }
 
@@ -82,7 +96,7 @@ class DetectionController extends Controller
         $validated['gambar_bukti'] = $storedPath;
 
         $validated['status_validasi'] = 'Belum diverifikasi';
-        $validated['status_indikasi'] = $validated['status_indikasi'] ?? 'Aman';
+        $validated['status_indikasi'] = $validated['status_indikasi'] ?? 'Tidak terindikasi';
 
         $absolutePath = storage_path('app/public/'.$storedPath);
         $aiResult = $this->runAiAssistedDetection($absolutePath);
@@ -90,16 +104,20 @@ class DetectionController extends Controller
         if (($aiResult['status'] ?? '') === 'success') {
             $violations = $aiResult['violations'] ?? [];
             
+            $model_version = $aiResult['model_version'] ?? 'YOLOv8 COCO';
+            
             if (empty($violations)) {
-                $validated['status_indikasi'] = 'Aman';
+                $validated['status_indikasi'] = 'Tidak terindikasi';
+                $validated['model_version'] = $model_version;
                 $detection = Detection::create($validated);
                 $this->sendTelegramIfNeeded($detection);
             } else {
                 foreach ($violations as $idx => $v) {
                     $newValid = $validated;
-                    $newValid['status_indikasi'] = 'Terindikasi membuang sampah';
+                    $newValid['status_indikasi'] = $v['status_indikasi'] ?? 'Terindikasi membuang sampah';
                     $newValid['kategori_sampah'] = $v['kategori'] ?? 'Tidak Diketahui';
                     $newValid['confidence_score'] = $v['confidence_score'] ?? 0;
+                    $newValid['model_version'] = $model_version;
                     
                     if (!empty($v['frame_out_path'])) {
                         $pathInfo = pathinfo($storedPath);
@@ -111,8 +129,9 @@ class DetectionController extends Controller
                 }
             }
         } else {
-            $validated['status_indikasi'] = 'Aman';
+            $validated['status_indikasi'] = 'Tidak terindikasi';
             $validated['keterangan'] = trim(($validated['keterangan'] ?? '').' | AI gagal dianalisis.', ' |');
+            $validated['model_version'] = 'Error/Unknown';
             $detection = Detection::create($validated);
             $this->sendTelegramIfNeeded($detection);
         }
@@ -225,7 +244,7 @@ class DetectionController extends Controller
 
     private function sendTelegramIfNeeded(Detection $detection): void
     {
-        if (!in_array($detection->status_indikasi, ['Mencurigakan', 'Terindikasi membuang sampah', 'Pelanggaran terkonfirmasi'])) {
+        if (!in_array($detection->status_indikasi, ['Mencurigakan', 'Terindikasi membuang sampah', 'Pelanggaran terkonfirmasi', 'Perlu validasi'])) {
             return;
         }
 

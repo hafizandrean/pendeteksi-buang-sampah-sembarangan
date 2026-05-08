@@ -7,16 +7,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #F4F8F2;
-            --surface-color: #ffffff;
-            --border-color: #e0e0e0;
-            --text-primary: #263238;
-            --text-secondary: #546e7a;
-            --accent-primary: #2E7D32;
-            --accent-button: #4CAF50;
-            --accent-button-hover: #388e3c;
-            --accent-danger: #e53935;
-            --accent-warning: #FB8C00;
+            --bg-color: #EEF2EC;
+            --surface-color: #FFFFFF;
+            --border-color: #E2E8F0;
+            --text-primary: #1F2937;
+            --text-secondary: #4B5563;
+            --accent-primary: #1E3A2F;
+            --accent-button: #2E7D32;
+            --accent-button-hover: #1b5e20;
+            --accent-danger: #DC2626;
+            --accent-success: #10B981;
+            --accent-warning: #F59E0B;
         }
 
         body { 
@@ -112,9 +113,9 @@
             font-weight: 600;
         }
 
-        .badge-danger { background: rgba(229, 57, 53, 0.1); color: var(--accent-danger); }
-        .badge-warning { background: rgba(251, 140, 0, 0.1); color: var(--accent-warning); }
-        .badge-success { background: rgba(67, 160, 71, 0.1); color: var(--accent-primary); }
+        .badge-danger { background: rgba(220, 38, 38, 0.1); color: var(--accent-danger); }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); }
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--accent-success); }
 
         .form-group { margin-bottom: 1rem; }
         .form-group select, .form-group textarea {
@@ -185,8 +186,10 @@
                 <div class="detail-row">
                     <span class="detail-label">Status AI</span>
                     <div>
-                        @if(in_array($detection->status_indikasi, ['Terindikasi membuang sampah', 'Mencurigakan']))
+                        @if($detection->status_indikasi == 'Terindikasi membuang sampah')
                             <span class="badge badge-danger">{{ $detection->status_indikasi }}</span>
+                        @elseif(in_array($detection->status_indikasi, ['Mencurigakan', 'Perlu validasi']))
+                            <span class="badge badge-warning">{{ $detection->status_indikasi }}</span>
                         @else
                             <span class="badge badge-success">{{ $detection->status_indikasi }}</span>
                         @endif
@@ -194,8 +197,8 @@
                 </div>
 
                 <div class="detail-row">
-                    <span class="detail-label">Nama Pelaku</span>
-                    <span class="detail-value">{{ $detection->nama_pelaku ?? 'Tidak Diketahui' }}</span>
+                    <span class="detail-label">Identitas Pelaku</span>
+                    <span class="detail-value">{{ $detection->nama_pelaku ?? 'Belum diketahui' }}</span>
                 </div>
 
                 <div class="detail-row">
@@ -214,7 +217,7 @@
                 </div>
 
                 <div class="detail-row">
-                    <span class="detail-label">Tingkat Keyakinan (AI)</span>
+                    <span class="detail-label">Tingkat Keyakinan</span>
                     <span class="detail-value">{{ $detection->confidence_score ? ($detection->confidence_score * 100).'%' : '-' }}</span>
                 </div>
 
