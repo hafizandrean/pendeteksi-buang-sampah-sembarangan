@@ -2,20 +2,13 @@ import json
 import os
 import sys
 
-
 def detect_with_yolo(file_path: str) -> dict:
     from ultralytics import YOLO
     import cv2
 
-    # Fallback logika model
-    if os.path.exists("best.pt"):
-        model = YOLO("best.pt")
-        is_custom_model = True
-        model_version = "YOLOv8 Custom Trash v1"
-    else:
-        model = YOLO("yolov8n.pt")
-        is_custom_model = False
-        model_version = "YOLOv8 COCO"
+    # Gunakan model YOLOv8n default karena fokus hanya pada person
+    model = YOLO("yolov8n.pt")
+    model_version = "YOLOv8 COCO (Person Only)"
 
     ext = os.path.splitext(file_path)[1].lower()
     image_ext = {".jpg", ".jpeg", ".png"}
@@ -24,65 +17,78 @@ def detect_with_yolo(file_path: str) -> dict:
     output_violations = []
 
     if ext in image_ext:
-        results = model(file_path, verbose=False, conf=0.15)
-        frame_has_person = False
-        frame_trash_conf = 0.0
-        frame_cats = set()
+        # Load image untuk mendapatkan dimensi
+        img = cv2.imread(file_path)
+        if img is None:
+            return {"status": "error", "message": "Gagal memuat gambar"}
+        height, width = img.shape[:2]
+        river_zone_y = int(height * 0.6) # Asumsi area sungai adalah 40% area bawah gambar
+
+        results = model(img, verbose=False, conf=0.30)
+        
+        best_person_conf = 0.0
+        person_in_zone = False
         
         for result in results:
             for box in result.boxes:
                 cls = int(box.cls[0])
                 conf = float(box.conf[0])
                 
-                # Abaikan deteksi dengan confidence di bawah 30%
-                if conf < 0.30:
-                    continue
+                # Fokus HANYA pada person (class 0)
+                if cls == 0 and conf >= 0.30:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+                    # Gunakan bagian bawah bounding box (kaki) sebagai titik referensi lokasi
+                    cy = y2 
+                    
+                    if cy >= river_zone_y:
+                        person_in_zone = True
+                        if conf > best_person_conf:
+                            best_person_conf = conf
 
-                if is_custom_model:
-                    # Custom model: 0 = person, 1 = trash
-                    if cls == 0:
-                        frame_has_person = True
-                    elif cls == 1:
-                        if conf > frame_trash_conf: frame_trash_conf = conf
-                else:
-                    # COCO model: 0 = person, 39 = bottle, 41 = cup
-                    if cls == 0:
-                        frame_has_person = True
-                    elif cls in [39, 41]:
-                        if conf > frame_trash_conf: frame_trash_conf = conf
-        
-        # Logika Status AI Baru:
-        # Hanya naik status jika ada Person DAN Trash >= 30%
-        if frame_has_person and frame_trash_conf >= 0.30:
-            if frame_trash_conf >= 0.65:
-                status_indikasi = "Terindikasi membuang sampah"
-                kategori_str = "Indikasi sampah"
+        if person_in_zone:
+            final_conf = best_person_conf
+            if final_conf >= 0.65:
+                status_indikasi = "Aktivitas mencurigakan kuat"
             else:
                 status_indikasi = "Perlu validasi"
-                kategori_str = "Objek mencurigakan"
                 
             base, _ = os.path.splitext(file_path)
             out_path = f"{base}_frame_1.jpg"
-            # Sembunyikan raw label yolo
-            cv2.imwrite(out_path, results[0].plot(labels=False))
+            # Gambar polygon zona sungai untuk visualisasi
+            annotated_img = results[0].plot(labels=False)
+            cv2.line(annotated_img, (0, river_zone_y), (width, river_zone_y), (0, 0, 255), 2)
+            cv2.putText(annotated_img, "ZONA SUNGAI", (10, river_zone_y + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            
+            cv2.imwrite(out_path, annotated_img)
             
             output_violations.append({
-                "kategori": kategori_str,
-                "confidence_score": round(frame_trash_conf, 2),
+                "kategori": "Indikasi Aktivitas Mencurigakan",
+                "confidence_score": round(final_conf, 2),
                 "frame_out_path": out_path,
                 "status_indikasi": status_indikasi
             })
 
     elif ext in video_ext:
         cap = cv2.VideoCapture(file_path)
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        if fps == 0 or fps != fps: fps = 30.0 # fallback
+
+        river_zone_y = int(frame_height * 0.6)
         frame_index = 0
         
         violations_list = []
-        in_event = False
+        
+        # Tracking variabel
+        consecutive_frames_in_zone = 0
         event_best_conf = 0.0
         event_best_frame = None
-        event_categories = set()
-        no_violation_frames = 0
+        no_person_frames = 0
+        in_event = False
+        
+        # Proses setiap 10 frame (kurang lebih 3 FPS) untuk optimasi
+        FRAME_SKIP = 10 
         
         while True:
             ret, frame = cap.read()
@@ -90,64 +96,63 @@ def detect_with_yolo(file_path: str) -> dict:
                 break
 
             frame_index += 1
-            if frame_index % 10 != 0:
+            if frame_index % FRAME_SKIP != 0:
                 continue
 
-            results = model(frame, verbose=False, conf=0.15)
+            results = model(frame, verbose=False, conf=0.30)
             
-            frame_has_person = False
-            frame_trash_conf = 0.0
-            frame_cats = set()
+            person_in_zone_this_frame = False
+            frame_best_conf = 0.0
             
             for result in results:
                 for box in result.boxes:
                     cls = int(box.cls[0])
                     conf = float(box.conf[0])
                     
-                    if conf < 0.30:
-                        continue
+                    if cls == 0 and conf >= 0.30:
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])
+                        cy = y2
+                        
+                        if cy >= river_zone_y:
+                            person_in_zone_this_frame = True
+                            if conf > frame_best_conf:
+                                frame_best_conf = conf
 
-                    if is_custom_model:
-                        if cls == 0:
-                            frame_has_person = True
-                        elif cls == 1:
-                            if conf > frame_trash_conf: frame_trash_conf = conf
-                    else:
-                        if cls == 0:
-                            frame_has_person = True
-                        elif cls in [39, 41]:
-                            if conf > frame_trash_conf: frame_trash_conf = conf
-
-            if frame_has_person and frame_trash_conf >= 0.30:
+            if person_in_zone_this_frame:
                 in_event = True
-                no_violation_frames = 0
+                consecutive_frames_in_zone += 1
+                no_person_frames = 0
                 
-                if frame_trash_conf > event_best_conf or event_best_frame is None:
-                    event_best_conf = frame_trash_conf
-                    event_best_frame = results[0].plot(labels=False)
+                if frame_best_conf > event_best_conf or event_best_frame is None:
+                    event_best_conf = frame_best_conf
+                    # Gambar zona
+                    annotated = results[0].plot(labels=False)
+                    cv2.line(annotated, (0, river_zone_y), (frame_width, river_zone_y), (0, 0, 255), 2)
+                    cv2.putText(annotated, "ZONA SUNGAI", (10, river_zone_y + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                    event_best_frame = annotated
             else:
                 if in_event:
-                    no_violation_frames += 1
-                    # Jika selama 15 iterasi (5 detik) tidak ada pelanggaran beruntun, event berakhir
-                    if no_violation_frames >= 15:
+                    no_person_frames += 1
+                    # Jika 15 iterasi (~5 detik) tidak ada orang di zona, akhiri event
+                    if no_person_frames >= 15:
                         violations_list.append({
                             "best_frame": event_best_frame,
-                            "confidence": event_best_conf,
-                            "categories": list(event_categories)
+                            "base_confidence": event_best_conf,
+                            "frames_in_zone": consecutive_frames_in_zone
                         })
                         in_event = False
+                        consecutive_frames_in_zone = 0
                         event_best_conf = 0.0
                         event_best_frame = None
-                        event_categories = set()
-                        no_violation_frames = 0
+                        no_person_frames = 0
 
         cap.release()
         
         if in_event and event_best_frame is not None:
             violations_list.append({
                 "best_frame": event_best_frame,
-                "confidence": event_best_conf,
-                "categories": list(event_categories)
+                "base_confidence": event_best_conf,
+                "frames_in_zone": consecutive_frames_in_zone
             })
 
         base, _ = os.path.splitext(file_path)
@@ -155,17 +160,23 @@ def detect_with_yolo(file_path: str) -> dict:
             out_path = f"{base}_frame_{i+1}.jpg"
             cv2.imwrite(out_path, v["best_frame"])
             
-            # Tentukan status indikasi dan kategori
-            if v["confidence"] >= 0.65:
-                status_indikasi = "Terindikasi membuang sampah"
-                kategori_str = "Indikasi sampah"
+            # Kalkulasi confidence final berdasar durasi
+            # Asumsi: FRAME_SKIP = 10, fps = 30 -> 1 frame = 0.33 detik.
+            # Jika frames_in_zone >= 9 (sekitar 3 detik), tingkatkan confidence
+            final_conf = v["base_confidence"]
+            if v["frames_in_zone"] >= 9:
+                final_conf = min(0.95, final_conf + 0.25)
+            elif v["frames_in_zone"] >= 4:
+                final_conf = min(0.85, final_conf + 0.15)
+                
+            if final_conf >= 0.65:
+                status_indikasi = "Aktivitas mencurigakan kuat"
             else:
                 status_indikasi = "Perlu validasi"
-                kategori_str = "Objek mencurigakan"
 
             output_violations.append({
-                "kategori": kategori_str,
-                "confidence_score": round(v["confidence"], 2),
+                "kategori": "Indikasi Aktivitas Mencurigakan",
+                "confidence_score": round(final_conf, 2),
                 "frame_out_path": out_path,
                 "status_indikasi": status_indikasi
             })

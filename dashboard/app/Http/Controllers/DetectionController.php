@@ -46,10 +46,10 @@ class DetectionController extends Controller
 
         // Stats Hari Ini (Unused, removed to save memory)
 
-        // Kategori Sampah
-        $botol = Detection::where('kategori_sampah', 'LIKE', '%Botol%')->count();
-        $plastik = Detection::where('kategori_sampah', 'LIKE', '%Gelas/Plastik%')->count();
-        $lainnya = Detection::where('kategori_sampah', 'Tidak Diketahui')->orWhereNull('kategori_sampah')->count();
+        // Statistik Deteksi
+        $aktivitasKuat = Detection::where('status_indikasi', 'Aktivitas mencurigakan kuat')->count();
+        $perluValidasi = Detection::where('status_indikasi', 'Perlu validasi')->count();
+        $tidakTerindikasi = Detection::where('status_indikasi', 'Tidak terindikasi')->count();
 
         // Jam Tersibuk
         $jamTersibukObj = Detection::selectRaw('HOUR(waktu_kejadian) as jam, COUNT(*) as total')
@@ -67,9 +67,9 @@ class DetectionController extends Controller
             'lokasiRawan',
             'totalTerverifikasi',
             'totalFalseDetection',
-            'botol',
-            'plastik',
-            'lainnya',
+            'aktivitasKuat',
+            'perluValidasi',
+            'tidakTerindikasi',
             'jamTersibuk',
             'totalJamTersibuk'
         ));
@@ -114,8 +114,8 @@ class DetectionController extends Controller
             } else {
                 foreach ($violations as $idx => $v) {
                     $newValid = $validated;
-                    $newValid['status_indikasi'] = $v['status_indikasi'] ?? 'Terindikasi membuang sampah';
-                    $newValid['kategori_sampah'] = $v['kategori'] ?? 'Tidak Diketahui';
+                    $newValid['status_indikasi'] = $v['status_indikasi'] ?? 'Aktivitas mencurigakan kuat';
+                    $newValid['kategori_sampah'] = $v['kategori'] ?? 'Indikasi Aktivitas Mencurigakan';
                     $newValid['confidence_score'] = $v['confidence_score'] ?? 0;
                     $newValid['model_version'] = $model_version;
                     
@@ -177,7 +177,7 @@ class DetectionController extends Controller
                 'Nama Pelaku',
                 'Waktu Kejadian',
                 'Jenis Bukti',
-                'Kategori Sampah',
+                'Jenis Indikasi',
                 'Confidence Score',
                 'Status Indikasi',
                 'Status Validasi',
@@ -231,8 +231,9 @@ class DetectionController extends Controller
         exec($command, $output, $exitCode);
 
         $rawOutput = trim(implode("\n", $output));
-        Log::info('Raw Output Python: '.$rawOutput);
-        Log::info('Script AI selesai dengan code: '.$exitCode);
+        // Hapus log raw output untuk mengurangi beban server
+        // Log::info('Raw Output Python: '.$rawOutput);
+        // Log::info('Script AI selesai dengan code: '.$exitCode);
 
         $decoded = json_decode($rawOutput, true);
         if ($exitCode !== 0 || ! is_array($decoded)) {
@@ -244,7 +245,7 @@ class DetectionController extends Controller
 
     private function sendTelegramIfNeeded(Detection $detection): void
     {
-        if (!in_array($detection->status_indikasi, ['Mencurigakan', 'Terindikasi membuang sampah', 'Pelanggaran terkonfirmasi', 'Perlu validasi'])) {
+        if (!in_array($detection->status_indikasi, ['Aktivitas mencurigakan kuat', 'Perlu validasi'])) {
             return;
         }
 
@@ -293,7 +294,7 @@ class DetectionController extends Controller
 
         $today = now()->startOfDay();
         $detections = Detection::where('waktu_kejadian', '>=', $today)
-            ->whereIn('status_indikasi', ['Mencurigakan', 'Terindikasi membuang sampah', 'Pelanggaran terkonfirmasi'])
+            ->whereIn('status_indikasi', ['Aktivitas mencurigakan kuat', 'Perlu validasi'])
             ->get();
 
         $total = $detections->count();
