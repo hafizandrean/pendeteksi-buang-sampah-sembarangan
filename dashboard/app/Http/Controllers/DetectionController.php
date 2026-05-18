@@ -34,8 +34,13 @@ class DetectionController extends Controller
             $query->where('status_indikasi', $request->status);
         }
 
+        // Priority Sorting: Indikasi Tinggi -> Confidence Tertinggi -> Terbaru
+        $query->orderByRaw("CASE WHEN status_indikasi = 'Indikasi Pelanggaran Tinggi' THEN 1 WHEN status_indikasi = 'Perlu Validasi' THEN 2 ELSE 3 END")
+              ->orderByDesc('confidence_score')
+              ->latest();
+
         $perPage = $request->input('per_page', 10);
-        $detections = $query->latest()->paginate($perPage)->withQueryString();
+        $detections = $query->paginate($perPage)->withQueryString();
 
         // Overall Stats
         $totalDeteksi = Detection::count();
@@ -47,9 +52,9 @@ class DetectionController extends Controller
         // Stats Hari Ini (Unused, removed to save memory)
 
         // Statistik Deteksi
-        $aktivitasKuat = Detection::where('status_indikasi', 'Aktivitas mencurigakan kuat')->count();
-        $perluValidasi = Detection::where('status_indikasi', 'Perlu validasi')->count();
-        $tidakTerindikasi = Detection::where('status_indikasi', 'Tidak terindikasi')->count();
+        $aktivitasKuat = Detection::where('status_indikasi', 'Indikasi Pelanggaran Tinggi')->count();
+        $perluValidasi = Detection::where('status_indikasi', 'Perlu Validasi')->count();
+        $tidakTerindikasi = Detection::where('status_indikasi', 'Tidak Terindikasi')->count();
 
         // Jam Tersibuk
         $jamTersibukObj = Detection::selectRaw('HOUR(waktu_kejadian) as jam, COUNT(*) as total')
@@ -96,7 +101,7 @@ class DetectionController extends Controller
         $validated['gambar_bukti'] = $storedPath;
 
         $validated['status_validasi'] = 'Belum diverifikasi';
-        $validated['status_indikasi'] = $validated['status_indikasi'] ?? 'Tidak terindikasi';
+        $validated['status_indikasi'] = $validated['status_indikasi'] ?? 'Tidak Terindikasi';
 
         $absolutePath = storage_path('app/public/'.$storedPath);
         $aiResult = $this->runAiAssistedDetection($absolutePath);
@@ -107,14 +112,14 @@ class DetectionController extends Controller
             $model_version = $aiResult['model_version'] ?? 'YOLOv8 COCO';
             
             if (empty($violations)) {
-                $validated['status_indikasi'] = 'Tidak terindikasi';
+                $validated['status_indikasi'] = 'Tidak Terindikasi';
                 $validated['model_version'] = $model_version;
                 $detection = Detection::create($validated);
                 $this->sendTelegramIfNeeded($detection);
             } else {
                 foreach ($violations as $idx => $v) {
                     $newValid = $validated;
-                    $newValid['status_indikasi'] = $v['status_indikasi'] ?? 'Aktivitas mencurigakan kuat';
+                    $newValid['status_indikasi'] = $v['status_indikasi'] ?? 'Indikasi Pelanggaran Tinggi';
                     $newValid['kategori_sampah'] = $v['kategori'] ?? 'Indikasi Aktivitas Mencurigakan';
                     $newValid['confidence_score'] = $v['confidence_score'] ?? 0;
                     $newValid['model_version'] = $model_version;
@@ -129,7 +134,7 @@ class DetectionController extends Controller
                 }
             }
         } else {
-            $validated['status_indikasi'] = 'Tidak terindikasi';
+            $validated['status_indikasi'] = 'Tidak Terindikasi';
             $validated['keterangan'] = trim(($validated['keterangan'] ?? '').' | AI gagal dianalisis.', ' |');
             $validated['model_version'] = 'Error/Unknown';
             $detection = Detection::create($validated);
@@ -158,6 +163,17 @@ class DetectionController extends Controller
         return redirect()
             ->route('dashboard.show', $detection->id)
             ->with('success', 'Status validasi berhasil diperbarui.');
+    }
+
+    public function updateValidationAjax(Request $request, Detection $detection)
+    {
+        $validated = $request->validate([
+            'status_validasi' => 'required|string|max:255',
+        ]);
+
+        $detection->update($validated);
+
+        return response()->json(['success' => true, 'message' => 'Status validasi berhasil diperbarui.']);
     }
 
     public function exportCsv()
@@ -245,7 +261,7 @@ class DetectionController extends Controller
 
     private function sendTelegramIfNeeded(Detection $detection): void
     {
-        if (!in_array($detection->status_indikasi, ['Aktivitas mencurigakan kuat', 'Perlu validasi'])) {
+        if (!in_array($detection->status_indikasi, ['Indikasi Pelanggaran Tinggi'])) {
             return;
         }
 
@@ -294,7 +310,7 @@ class DetectionController extends Controller
 
         $today = now()->startOfDay();
         $detections = Detection::where('waktu_kejadian', '>=', $today)
-            ->whereIn('status_indikasi', ['Aktivitas mencurigakan kuat', 'Perlu validasi'])
+            ->whereIn('status_indikasi', ['Indikasi Pelanggaran Tinggi', 'Perlu Validasi'])
             ->get();
 
         $total = $detections->count();

@@ -48,9 +48,9 @@ def detect_with_yolo(file_path: str) -> dict:
         if person_in_zone:
             final_conf = best_person_conf
             if final_conf >= 0.65:
-                status_indikasi = "Aktivitas mencurigakan kuat"
+                status_indikasi = "Indikasi Pelanggaran Tinggi"
             else:
-                status_indikasi = "Perlu validasi"
+                status_indikasi = "Perlu Validasi"
                 
             base, _ = os.path.splitext(file_path)
             out_path = f"{base}_frame_1.jpg"
@@ -170,9 +170,9 @@ def detect_with_yolo(file_path: str) -> dict:
                 final_conf = min(0.85, final_conf + 0.15)
                 
             if final_conf >= 0.65:
-                status_indikasi = "Aktivitas mencurigakan kuat"
+                status_indikasi = "Indikasi Pelanggaran Tinggi"
             else:
-                status_indikasi = "Perlu validasi"
+                status_indikasi = "Perlu Validasi"
 
             output_violations.append({
                 "kategori": "Indikasi Aktivitas Mencurigakan",

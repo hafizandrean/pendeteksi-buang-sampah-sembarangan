@@ -4,26 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simbahrang - Upload Bukti</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #EEF2EC;
+            --bg-color: #F7F9F7;
             --surface-color: #FFFFFF;
-            --surface-hover: #F8FAF9;
+            --surface-hover: #F1F5F9;
             --border-color: #E2E8F0;
             --text-primary: #1F2937;
-            --text-secondary: #4B5563;
-            --accent-primary: #1E3A2F;
-            --accent-primary-hover: #132720;
-            --accent-button: #2E7D32;
-            --accent-button-hover: #1b5e20;
-            --accent-danger: #DC2626;
-            --font-family: 'Inter', sans-serif;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --text-secondary: #64748B;
+            --accent-primary: #10B981; /* Emerald */
+            --accent-primary-hover: #059669;
+            --accent-button: #10B981;
+            --accent-button-hover: #059669;
+            --accent-danger: #F43F5E; /* Rose Soft */
+            --font-family: 'Plus Jakarta Sans', sans-serif;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 8px 20px -4px rgba(0, 0, 0, 0.05), 0 4px 10px -4px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 12px 25px -5px rgba(0, 0, 0, 0.1);
             --radius-md: 12px;
-            --radius-lg: 16px;
+            --radius-lg: 20px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }

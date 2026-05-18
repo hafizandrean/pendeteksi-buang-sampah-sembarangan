@@ -4,27 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simbahrang - Detail Kejadian</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #EEF2EC;
+            --bg-color: #F7F9F7;
             --surface-color: #FFFFFF;
-            --surface-hover: #F8FAF9;
+            --surface-hover: #F1F5F9;
             --border-color: #E2E8F0;
             --text-primary: #1F2937;
-            --text-secondary: #4B5563;
-            --accent-primary: #1E3A2F;
-            --accent-primary-hover: #132720;
-            --accent-button: #2E7D32;
-            --accent-button-hover: #1b5e20;
-            --accent-danger: #DC2626;
+            --text-secondary: #64748B;
+            --accent-primary: #10B981; /* Emerald */
+            --accent-primary-hover: #059669;
+            --accent-button: #10B981;
+            --accent-button-hover: #059669;
+            --accent-danger: #F43F5E; /* Rose Soft */
             --accent-success: #10B981;
-            --accent-warning: #F59E0B;
-            --font-family: 'Inter', sans-serif;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --accent-warning: #F97316; /* Orange Soft */
+            --font-family: 'Plus Jakarta Sans', sans-serif;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 8px 20px -4px rgba(0, 0, 0, 0.05), 0 4px 10px -4px rgba(0, 0, 0, 0.03);
             --radius-md: 12px;
-            --radius-lg: 16px;
+            --radius-lg: 20px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -71,12 +71,16 @@
         .detail-value { font-size: 1.05rem; font-weight: 500; color: var(--text-primary); }
 
         .badge {
-            display: inline-flex; align-items: center; padding: 0.35rem 0.85rem; border-radius: 99px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;
+            display: inline-flex; align-items: center; padding: 0.4rem 0.85rem; border-radius: 99px; font-size: 0.85rem; font-weight: 700; gap: 0.4rem; letter-spacing: 0.02em;
         }
+        .badge-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-        .badge-danger { background: rgba(220, 38, 38, 0.1); color: var(--accent-danger); border: 1px solid rgba(220, 38, 38, 0.2); }
-        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-danger { background: rgba(244, 63, 94, 0.1); color: var(--accent-danger); border: 1px solid rgba(244, 63, 94, 0.2); }
+        .badge-danger .badge-dot { background: var(--accent-danger); }
+        .badge-warning { background: rgba(249, 115, 22, 0.1); color: var(--accent-warning); border: 1px solid rgba(249, 115, 22, 0.2); }
+        .badge-warning .badge-dot { background: var(--accent-warning); }
         .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .badge-success .badge-dot { background: var(--accent-success); }
 
         .form-group { margin-bottom: 1.25rem; }
         .form-group select, .form-group textarea {
@@ -136,12 +140,12 @@
                     <div class="detail-row">
                         <span class="detail-label">Status AI</span>
                         <div>
-                            @if($detection->status_indikasi == 'Aktivitas mencurigakan kuat')
-                                <span class="badge badge-danger">{{ $detection->status_indikasi }}</span>
-                            @elseif(in_array($detection->status_indikasi, ['Perlu validasi']))
-                                <span class="badge badge-warning">{{ $detection->status_indikasi }}</span>
+                            @if($detection->status_indikasi == 'Indikasi Pelanggaran Tinggi')
+                                <span class="badge badge-danger"><div class="badge-dot"></div> {{ $detection->status_indikasi }}</span>
+                            @elseif(in_array($detection->status_indikasi, ['Perlu Validasi']))
+                                <span class="badge badge-warning"><div class="badge-dot"></div> {{ $detection->status_indikasi }}</span>
                             @else
-                                <span class="badge badge-success">{{ $detection->status_indikasi }}</span>
+                                <span class="badge badge-success"><div class="badge-dot"></div> {{ $detection->status_indikasi }}</span>
                             @endif
                         </div>
                     </div>
@@ -185,11 +189,11 @@
                         <span class="detail-label">Status Saat Ini</span>
                         <div>
                             @if($detection->status_validasi == 'Valid')
-                                <span class="badge badge-success">Terkonfirmasi Valid</span>
+                                <span class="badge badge-success"><div class="badge-dot"></div> Terkonfirmasi Valid</span>
                             @elseif($detection->status_validasi == 'False detection')
-                                <span class="badge badge-danger">Salah Deteksi AI</span>
+                                <span class="badge badge-danger"><div class="badge-dot"></div> Diabaikan</span>
                             @else
-                                <span class="badge badge-warning" style="background:var(--border-color); color:var(--text-secondary); border-color:transparent;">Menunggu Verifikasi</span>
+                                <span class="badge badge-warning" style="background:var(--surface-hover); color:var(--text-secondary); border-color:transparent;"><div class="badge-dot" style="background:var(--text-secondary);"></div> Menunggu Verifikasi</span>
                             @endif
                         </div>
                     </div>

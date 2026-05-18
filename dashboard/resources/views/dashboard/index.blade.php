@@ -4,30 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simbahrang - Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-color: #EEF2EC;
+            --bg-color: #F7F9F7;
             --surface-color: #FFFFFF;
             --surface-hover: #F8FAF9;
             --border-color: #E2E8F0;
             --text-primary: #1F2937;
-            --text-secondary: #4B5563;
-            --accent-primary: #1E3A2F;
-            --accent-primary-hover: #132720;
-            --accent-button: #2E7D32;
-            --accent-button-hover: #1b5e20;
-            --accent-danger: #DC2626;
+            --text-secondary: #64748B;
+            --accent-primary: #10B981; /* Emerald */
+            --accent-primary-hover: #059669;
+            --accent-button: #10B981;
+            --accent-button-hover: #059669;
+            --accent-danger: #F43F5E; /* Rose Soft */
             --accent-success: #10B981;
-            --accent-warning: #F59E0B;
+            --accent-warning: #F97316; /* Orange Soft */
             --accent-info: #3B82F6;
-            --font-family: 'Inter', sans-serif;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --font-family: 'Plus Jakarta Sans', sans-serif;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 8px 20px -4px rgba(0, 0, 0, 0.05), 0 4px 10px -4px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 12px 25px -5px rgba(0, 0, 0, 0.1);
             --radius-md: 12px;
-            --radius-lg: 16px;
+            --radius-lg: 20px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -55,29 +55,23 @@
         .card:hover { box-shadow: var(--shadow-md); }
 
         /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem; }
 
         .brand-title {
-            font-size: 2.2rem; font-weight: 800; color: var(--accent-primary); letter-spacing: -0.02em; margin-bottom: 0.25rem;
+            font-size: 2rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; margin-bottom: 0.2rem;
         }
 
-        .header-desc { color: var(--text-secondary); font-size: 1rem; font-weight: 500; }
+        .header-desc { color: var(--text-secondary); font-size: 0.95rem; font-weight: 500; }
 
-        .header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 1rem; }
+        .header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem; }
+
+        .system-health { display: flex; gap: 1rem; margin-bottom: 0.25rem; }
+        .health-indicator { display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+        .health-dot { width: 8px; height: 8px; background-color: var(--accent-success); border-radius: 50%; }
 
         .time-live {
-            display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: var(--text-secondary);
-            background: var(--surface-color); padding: 0.5rem 1rem; border-radius: 99px; border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm); font-weight: 500;
-        }
-
-        .live-indicator { display: flex; align-items: center; gap: 0.4rem; color: var(--accent-danger); font-weight: 700; font-size: 0.8rem; }
-        .live-dot { width: 8px; height: 8px; background-color: var(--accent-danger); border-radius: 50%; animation: pulse 2s infinite; }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+            display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);
+            font-weight: 500;
         }
 
         /* Buttons */
@@ -120,23 +114,47 @@
         .filter-form select:focus, .filter-form input:focus { border-color: var(--accent-primary); }
 
         /* Table */
-        .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); }
-        table { width: 100%; border-collapse: collapse; text-align: left; background: var(--surface-color); }
-        th { padding: 1rem; font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #F8FAFC; border-bottom: 2px solid var(--border-color); }
-        td { padding: 1rem; font-size: 0.95rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-        tbody tr:hover { background-color: var(--surface-hover); }
+        .table-container { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background: var(--surface-color); box-shadow: var(--shadow-sm); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; }
+        th { padding: 1.25rem 1rem; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #F8FAFC; border-bottom: 1px solid var(--border-color); letter-spacing: 0.05em; }
+        td { padding: 1.25rem 1rem; font-size: 0.95rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; transition: background 0.2s; }
+        tbody tr:hover td { background-color: var(--surface-hover); }
 
-        .thumbnail { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s; }
-        .thumbnail:hover { transform: scale(1.05); box-shadow: var(--shadow-md); }
+        .thumbnail { width: 100px; height: 75px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .thumbnail:hover { transform: scale(1.15) translateY(-5px); box-shadow: var(--shadow-md); z-index: 10; position: relative; }
 
         /* Badges */
-        .badge { display: inline-flex; align-items: center; padding: 0.35rem 0.75rem; border-radius: 99px; font-size: 0.8rem; font-weight: 600; }
-        .badge-danger { background: rgba(220, 38, 38, 0.1); color: var(--accent-danger); }
-        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); }
+        .badge { display: inline-flex; align-items: center; padding: 0.4rem 0.85rem; border-radius: 99px; font-size: 0.75rem; font-weight: 700; gap: 0.35rem; }
+        .badge-danger { background: rgba(244, 63, 94, 0.1); color: var(--accent-danger); }
+        .badge-warning { background: rgba(249, 115, 22, 0.1); color: var(--accent-warning); }
         .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--accent-success); }
+        .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .badge-danger .badge-dot { background: var(--accent-danger); }
+        .badge-warning .badge-dot { background: var(--accent-warning); }
+        .badge-success .badge-dot { background: var(--accent-success); }
 
-        .action-link { color: var(--accent-button); text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: 6px; background: rgba(46, 125, 50, 0.05); transition: all 0.2s; display: inline-block; border: 1px solid transparent; }
-        .action-link:hover { background: rgba(46, 125, 50, 0.1); border-color: rgba(46, 125, 50, 0.2); }
+        .action-link { color: var(--accent-button); text-decoration: none; font-weight: 600; font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 8px; background: rgba(16, 185, 129, 0.05); transition: all 0.2s; display: inline-block; border: 1px solid transparent; }
+        .action-link:hover { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
+
+        .btn-quick { background: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.35rem; color: var(--text-secondary); }
+        .btn-quick:hover { background: var(--surface-hover); border-color: var(--text-secondary); color: var(--text-primary); }
+        .btn-quick.valid:hover { background: rgba(16, 185, 129, 0.1); border-color: var(--accent-success); color: var(--accent-success); }
+        .btn-quick.invalid:hover { background: rgba(244, 63, 94, 0.1); border-color: var(--accent-danger); color: var(--accent-danger); }
+
+        /* Responsive Table for Mobile */
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-bottom: 1rem; background: var(--surface-color); box-shadow: var(--shadow-sm); padding: 1rem; }
+            td { border: none; padding: 0.5rem 0; position: relative; padding-left: 40%; border-bottom: 1px solid #f1f5f9; }
+            td:last-child { border-bottom: none; }
+            td:before { position: absolute; top: 0.5rem; left: 0; width: 35%; padding-right: 10px; white-space: nowrap; font-weight: 700; font-size: 0.75rem; color: var(--text-secondary); }
+            td:nth-of-type(1):before { content: "Bukti"; }
+            td:nth-of-type(2):before { content: "Info & Lokasi"; }
+            td:nth-of-type(3):before { content: "AI Analysis"; }
+            td:nth-of-type(4):before { content: "Status Admin"; }
+            td:nth-of-type(5):before { content: "Aksi"; }
+        }
 
         /* Sidebar Elements */
         .sidebar-list { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -207,17 +225,16 @@
         <header class="header">
             <div>
                 <h1 class="brand-title">Simbahrang</h1>
-                <p class="header-desc">Sistem Pendeteksi Buang Sampah Sembarangan</p>
+                <p class="header-desc">Sistem Monitoring Aktivitas Mencurigakan Sungai</p>
             </div>
             <div class="header-actions">
+                <div class="system-health">
+                    <span class="health-indicator"><div class="health-dot"></div> AI Aktif</span>
+                    <span class="health-indicator"><div class="health-dot"></div> Telegram</span>
+                    <span class="health-indicator"><div class="health-dot"></div> DB Normal</span>
+                </div>
                 <div class="time-live">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span id="current-time">{{ now()->isoFormat('ddd, D MMM YYYY, HH:mm:ss') }}</span>
-                    <div style="width: 1px; height: 16px; background: var(--border-color); margin: 0 0.5rem;"></div>
-                    <div class="live-indicator">
-                        <div class="live-dot"></div>
-                        LIVE
-                    </div>
+                    🕒 Update terakhir: <span id="current-time">{{ now()->isoFormat('D MMM YYYY • HH:mm') }} WIB</span>
                 </div>
                 <div class="btn-group">
                     <a href="{{ route('dashboard.export') }}" class="btn btn-outline">Export Data</a>
@@ -279,9 +296,9 @@
                     <input type="text" name="lokasi" value="{{ request('lokasi') }}" placeholder="Cari Lokasi..." style="flex-grow: 1; min-width: 150px;">
                     <select name="status">
                         <option value="">Semua Status AI</option>
-                        <option value="Tidak terindikasi" {{ request('status') == 'Tidak terindikasi' ? 'selected' : '' }}>Tidak terindikasi</option>
-                        <option value="Perlu validasi" {{ request('status') == 'Perlu validasi' ? 'selected' : '' }}>Perlu validasi</option>
-                        <option value="Aktivitas mencurigakan kuat" {{ request('status') == 'Aktivitas mencurigakan kuat' ? 'selected' : '' }}>Aktivitas mencurigakan kuat</option>
+                        <option value="Tidak Terindikasi" {{ request('status') == 'Tidak Terindikasi' ? 'selected' : '' }}>Tidak Terindikasi</option>
+                        <option value="Perlu Validasi" {{ request('status') == 'Perlu Validasi' ? 'selected' : '' }}>Perlu Validasi</option>
+                        <option value="Indikasi Pelanggaran Tinggi" {{ request('status') == 'Indikasi Pelanggaran Tinggi' ? 'selected' : '' }}>Indikasi Pelanggaran Tinggi</option>
                     </select>
                     <select name="per_page" onchange="this.form.submit()">
                         <option value="10" {{ request('per_page') == '10' ? 'selected' : '' }}>10</option>
@@ -318,41 +335,52 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <div style="font-weight:600; color:var(--text-primary);">{{ $item->lokasi }}</div>
-                                        <div style="font-size:0.85rem; color:var(--text-secondary); margin-top: 2px;">{{ $item->waktu_kejadian ? $item->waktu_kejadian->format('d M Y H:i') : '-' }}</div>
+                                        <div style="font-weight:600; color:var(--text-primary);">📍 {{ $item->lokasi }}</div>
+                                        <div style="font-size:0.85rem; color:var(--text-secondary); margin-top: 4px;">🕒 {{ $item->waktu_kejadian ? $item->waktu_kejadian->format('d M Y H:i') : '-' }}</div>
                                     </td>
                                     <td>
-                                        <div style="margin-bottom: 4px;">
-                                            @if($item->status_indikasi == 'Aktivitas mencurigakan kuat')
-                                                <span class="badge badge-danger">{{ $item->status_indikasi }}</span>
-                                            @elseif(in_array($item->status_indikasi, ['Perlu validasi']))
-                                                <span class="badge badge-warning">{{ $item->status_indikasi }}</span>
+                                        <div style="margin-bottom: 6px;">
+                                            @if($item->status_indikasi == 'Indikasi Pelanggaran Tinggi')
+                                                <span class="badge badge-danger"><div class="badge-dot"></div> {{ $item->status_indikasi }}</span>
+                                            @elseif(in_array($item->status_indikasi, ['Perlu Validasi']))
+                                                <span class="badge badge-warning"><div class="badge-dot"></div> {{ $item->status_indikasi }}</span>
                                             @else
-                                                <span class="badge badge-success">{{ $item->status_indikasi }}</span>
+                                                <span class="badge badge-success"><div class="badge-dot"></div> {{ $item->status_indikasi }}</span>
                                             @endif
                                         </div>
                                         @if($item->confidence_score)
-                                            <div style="font-size:0.8rem; color:var(--accent-primary); font-weight:600;">Keyakinan: {{ $item->confidence_score * 100 }}%</div>
+                                            <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">Keyakinan AI: <span style="color:var(--accent-primary);">{{ $item->confidence_score * 100 }}%</span></div>
                                         @endif
                                     </td>
                                     <td>
-                                        @if($item->status_validasi == 'Valid')
-                                            <span class="badge badge-success">Valid</span>
-                                        @elseif($item->status_validasi == 'False detection')
-                                            <span class="badge badge-danger">False</span>
-                                        @else
-                                            <span class="badge badge-warning" style="background: var(--border-color); color: var(--text-secondary);">Menunggu</span>
-                                        @endif
+                                        <div id="status-validasi-{{ $item->id }}">
+                                            @if($item->status_validasi == 'Valid')
+                                                <span class="badge badge-success"><div class="badge-dot"></div> Valid</span>
+                                            @elseif($item->status_validasi == 'False detection')
+                                                <span class="badge badge-danger"><div class="badge-dot"></div> Diabaikan</span>
+                                            @else
+                                                <span class="badge badge-warning" style="background: var(--surface-hover); color: var(--text-secondary);"><div class="badge-dot" style="background: var(--text-secondary);"></div> Menunggu</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td>
-                                        <a href="{{ route('dashboard.show', $item->id) }}" class="action-link">Cek Detail</a>
+                                        <div style="display:flex; flex-direction:column; gap:0.5rem; align-items:flex-start;">
+                                            @if($item->status_validasi != 'Valid' && $item->status_validasi != 'False detection')
+                                            <div style="display:flex; gap:0.5rem;">
+                                                <button onclick="quickValidate({{ $item->id }}, 'Valid')" class="btn-quick valid">✅ Valid</button>
+                                                <button onclick="quickValidate({{ $item->id }}, 'False detection')" class="btn-quick invalid">❌ Abaikan</button>
+                                            </div>
+                                            @endif
+                                            <a href="{{ route('dashboard.show', $item->id) }}" class="action-link" style="padding: 0.4rem 0.75rem; text-align:center;">Detail</a>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-                                        <svg style="width:48px; height:48px; margin:0 auto 1rem auto; display:block; opacity:0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        Tidak ada data terpantau sesuai filter.
+                                    <td colspan="5" style="text-align: center; padding: 4rem 1rem; color: var(--text-secondary); background: var(--surface-color);">
+                                        <div style="font-size: 3rem; margin-bottom: 1rem;">🟢</div>
+                                        <h3 style="color: var(--text-primary); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem;">Belum ada aktivitas mencurigakan</h3>
+                                        <p>Situasi saat ini terpantau aman dan terkendali.</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -463,24 +491,46 @@
             }
         });
 
-        // Update Live Time
+        // Update Live Time (simplified format)
         function updateTime() {
             const now = new Date();
-            const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-            
-            const dayName = days[now.getDay()];
             const day = now.getDate();
             const monthName = months[now.getMonth()];
             const year = now.getFullYear();
-            
             const h = String(now.getHours()).padStart(2, '0');
             const m = String(now.getMinutes()).padStart(2, '0');
-            const s = String(now.getSeconds()).padStart(2, '0');
             
-            document.getElementById('current-time').textContent = `${dayName}, ${day} ${monthName} ${year}, ${h}:${m}:${s}`;
+            document.getElementById('current-time').textContent = `${day} ${monthName} ${year} • ${h}:${m} WIB`;
         }
-        setInterval(updateTime, 1000);
+        setInterval(updateTime, 60000);
+
+        // Quick Validation AJAX
+        function quickValidate(id, status) {
+            fetch(`/dashboard/detections/${id}/validation-ajax`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ status_validasi: status })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const container = document.getElementById(`status-validasi-${id}`);
+                    if (status === 'Valid') {
+                        container.innerHTML = `<span class="badge badge-success"><div class="badge-dot"></div> Valid</span>`;
+                    } else {
+                        container.innerHTML = `<span class="badge badge-danger"><div class="badge-dot"></div> Diabaikan</span>`;
+                    }
+                    // Sembunyikan tombol action
+                    const actionCell = container.closest('tr').querySelector('.btn-quick').parentElement;
+                    if(actionCell) actionCell.style.display = 'none';
+                }
+            })
+            .catch(err => console.error(err));
+        }
 
         // Chart.js Setup
         document.addEventListener('DOMContentLoaded', function() {
@@ -488,7 +538,7 @@
             
             // Mengambil data dari variabel PHP yang sudah ada di Dashboard
             const data = {
-                labels: ['Aktivitas Kuat', 'Perlu Validasi', 'Aman (Abaikan)'],
+                labels: ['Indikasi Tinggi', 'Perlu Validasi', 'Aman (Abaikan)'],
                 datasets: [{
                     label: 'Jumlah Deteksi',
                     data: [{{ $aktivitasKuat }}, {{ $perluValidasi }}, {{ $tidakTerindikasi }}],
