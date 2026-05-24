@@ -123,21 +123,31 @@
         <div class="grid">
             <!-- Left: Bukti & Info -->
             <div class="card">
-                    @if ($detection->image_path)
-                    @php
-                        $ext = strtolower(pathinfo($detection->image_path, PATHINFO_EXTENSION));
-                    @endphp
+                    @if ($detection->gambar_bukti)
+    @php
+        $path = $detection->gambar_bukti;
 
-                    @if(in_array($ext, ['mp4', 'mov', 'avi', 'mkv']))
-                        <video src="{{ asset($detection->image_path) }}" class="evidence-img" controls autoplay loop muted></video>
-                    @else
-                        <img src="{{ asset($detection->image_path) }}" class="evidence-img" alt="Bukti visual">
-                    @endif
-                @else
-                    <div style="background:#F1F5F9; height:300px; display:flex; align-items:center; justify-content:center; border-radius:8px; margin-bottom:1.5rem; color:var(--text-secondary); border: 1px dashed var(--border-color); font-weight: 600;">
-                        Tidak ada bukti visual
-                    </div>
-                @endif
+        if (str_starts_with($path, 'images/')) {
+            $src = asset($path);
+        } elseif (str_starts_with($path, 'bukti/')) {
+            $src = asset('storage/' . $path);
+        } else {
+            $src = asset('images/' . $path);
+        }
+
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    @endphp
+
+    @if(in_array($ext, ['mp4', 'mov', 'avi', 'mkv']))
+        <video src="{{ $src }}" class="evidence-img" controls autoplay loop muted></video>
+    @else
+        <img src="{{ $src }}" class="evidence-img" alt="Bukti visual">
+    @endif
+@else
+    <div style="background:#F1F5F9; height:300px; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+        Tidak ada bukti visual
+    </div>
+@endif
 
                 <div class="detail-grid">
                     <div class="detail-row">

@@ -34,10 +34,8 @@ class DetectionController extends Controller
             $query->where('status_indikasi', $request->status);
         }
 
-        // Priority Sorting: Indikasi Tinggi -> Confidence Tertinggi -> Terbaru
-        $query->orderByRaw("CASE WHEN status_indikasi = 'Indikasi Pelanggaran Tinggi' THEN 1 WHEN status_indikasi = 'Perlu Validasi' THEN 2 ELSE 3 END")
-              ->orderByDesc('confidence_score')
-              ->latest();
+        // Urutkan berdasarkan ID terbaru (paling baru di atas)
+        $query->orderByDesc('id');
 
         $perPage = $request->input('per_page', 10);
         $detections = $query->paginate($perPage)->withQueryString();
