@@ -91,7 +91,7 @@ while True:
 
             try:
                 sql = """INSERT INTO detections 
-                         (image_path, detected_objects, status_indikasi, location, detected_at, created_at, updated_at) 
+                         (gambar_bukti, jenis_bukti, status_indikasi, lokasi, waktu_kejadian, created_at, updated_at) 
                          VALUES (%s, %s, %s, %s, %s, %s, %s)"""
                 val = (db_image_path, objek_terdeteksi, status_indikasi, lokasi, waktu, waktu, waktu)
                 cursor.execute(sql, val)
