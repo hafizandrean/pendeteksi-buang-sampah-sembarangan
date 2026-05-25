@@ -33,6 +33,9 @@ class DetectionController extends Controller
         if ($request->filled('status')) {
             $query->where('status_indikasi', $request->status);
         }
+        if ($request->filled('status_admin')) {
+            $query->where('status_validasi', $request->status_admin);
+        }
 
         // Urutkan berdasarkan ID terbaru (paling baru di atas)
         $query->orderByDesc('id');
@@ -49,10 +52,10 @@ class DetectionController extends Controller
 
         // Stats Hari Ini (Unused, removed to save memory)
 
-        // Statistik Deteksi
-        $aktivitasKuat = Detection::where('status_indikasi', 'Indikasi Pelanggaran Tinggi')->count();
-        $perluValidasi = Detection::where('status_indikasi', 'Perlu Validasi')->count();
-        $tidakTerindikasi = Detection::where('status_indikasi', 'Tidak Terindikasi')->count();
+        // Statistik Validasi Admin (Untuk Grafik)
+        $menungguValidasi = Detection::whereNotIn('status_validasi', ['Valid', 'False detection'])->count();
+        $valid = Detection::where('status_validasi', 'Valid')->count();
+        $diabaikan = Detection::where('status_validasi', 'False detection')->count();
 
         // Jam Tersibuk
         $jamTersibukObj = Detection::selectRaw('HOUR(waktu_kejadian) as jam, COUNT(*) as total')
@@ -70,9 +73,9 @@ class DetectionController extends Controller
             'lokasiRawan',
             'totalTerverifikasi',
             'totalFalseDetection',
-            'aktivitasKuat',
-            'perluValidasi',
-            'tidakTerindikasi',
+            'menungguValidasi',
+            'valid',
+            'diabaikan',
             'jamTersibuk',
             'totalJamTersibuk'
         ));
@@ -89,24 +92,41 @@ class DetectionController extends Controller
             'lokasi' => 'required|string|max:255',
             'nama_pelaku' => 'nullable|string|max:255',
             'waktu_kejadian' => 'required|date',
-            'gambar_bukti' => 'required|file|mimes:jpg,jpeg,png,mp4,mov,avi,mkv|max:102400',
+            'gambar_bukti' => 'required|file|mimes:jpg,jpeg,png,mp4,mov,avi,mkv|max:2097152',
             'jenis_bukti' => 'required|string|max:255',
             'status_indikasi' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
         ]);
 
-        $storedPath = $request->file('gambar_bukti')->store('bukti', 'public');
-        $validated['gambar_bukti'] = $storedPath;
+        $file = $request->file('gambar_bukti');
+        $extension = strtolower($file->getClientOriginalExtension());
+        $storedPath = $file->store('bukti', 'public');
+        $absolutePath = storage_path('app/public/'.$storedPath);
 
+        // --- TAMBAHAN LOGIKA UNTUK VIDEO CCTV (BACKGROUND PROCESS) ---
+        if (in_array($extension, ['mp4', 'mov', 'avi', 'mkv'])) {
+            // Path absolut ke file process_video.py lu (sesuaikan jika posisinya berbeda)
+            $pythonScriptPath = base_path('../process_video.py'); 
+
+            // Eksekusi background (jalan di balik layar)
+            $command = "python3 " . escapeshellarg($pythonScriptPath) . " " . escapeshellarg($absolutePath) . " " . escapeshellarg($request->lokasi) . " > /dev/null 2>&1 &";
+            shell_exec($command);
+
+            return redirect()
+                ->route('dashboard.index')
+                ->with('success', 'Video berhasil diupload! AI sedang mendeteksi pelanggaran di latar belakang.');
+        }
+        // -------------------------------------------------------------
+
+        // --- LOGIKA LAMA UNTUK UPLOAD FOTO (TETAP DIPERTAHANKAN) ---
+        $validated['gambar_bukti'] = $storedPath;
         $validated['status_validasi'] = 'Belum diverifikasi';
         $validated['status_indikasi'] = $validated['status_indikasi'] ?? 'Tidak Terindikasi';
 
-        $absolutePath = storage_path('app/public/'.$storedPath);
         $aiResult = $this->runAiAssistedDetection($absolutePath);
 
         if (($aiResult['status'] ?? '') === 'success') {
             $violations = $aiResult['violations'] ?? [];
-            
             $model_version = $aiResult['model_version'] ?? 'YOLOv8 COCO';
             
             if (empty($violations)) {
