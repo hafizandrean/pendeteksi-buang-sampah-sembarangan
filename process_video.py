@@ -68,16 +68,18 @@ while cap.isOpened():
         continue
 
     # Proses AI
-    results = model.track(frame, persist=True, verbose=False, conf=0.25)
+    results = model.track(frame, persist=True, verbose=False, conf=0.5)
     
     ada_manusia = False
     ada_sampah = False
+    max_sampah_conf = 0.0 # Buat nyimpen skor tertinggi dari sampah
 
     # Analisis Bounding Box
     for r in results:
         if r.boxes:
             for box in r.boxes:
                 cls = int(box.cls[0])
+                conf = float(box.conf[0]) # Ambil nilai confidence
                 class_name = model.names[cls]
 
                 if class_name == "person":
@@ -86,6 +88,8 @@ while cap.isOpened():
                 # Masukin semua nama class barang/sampah dari model lu ke dalam kurung siku ini
                 if class_name in ["bottle", "cup", "hp", "can", "battery", "trash", "plastic", "paper", "plastic bag"]: 
                     ada_sampah = True
+                    if conf > max_sampah_conf:
+                        max_sampah_conf = conf # Update skor tertinggi
 
     # Render frame dengan kotak deteksi
     annotated_frame = results[0].plot()
@@ -106,18 +110,26 @@ while cap.isOpened():
 
             cv2.imwrite(save_img_path, annotated_frame) # Simpan foto BERSERTA kotaknya
 
-            status_indikasi = "Indikasi Pelanggaran Tinggi"
+            # Logika Level Pelanggaran Baru (Rendah/Sedang/Tinggi)
+            if max_sampah_conf >= 0.75:
+                status_indikasi = "Indikasi Pelanggaran Tinggi"
+            elif max_sampah_conf >= 0.50:
+                status_indikasi = "Indikasi Pelanggaran Sedang"
+            else:
+                status_indikasi = "Indikasi Pelanggaran Rendah"
+
             lokasi = sys.argv[2] if len(sys.argv) > 2 else "Tidak Diketahui"
             objek_terdeteksi = "Manusia dan Sampah"
 
             try:
+                # Kolom confidence_score ditambahin biar masuk ke database
                 sql = """INSERT INTO detections 
-                         (gambar_bukti, jenis_bukti, status_indikasi, lokasi, waktu_kejadian, created_at, updated_at) 
-                         VALUES (%s, %s, %s, %s, %s, %s, %s)"""
-                val = (db_image_path, objek_terdeteksi, status_indikasi, lokasi, waktu, waktu, waktu)
+                         (gambar_bukti, jenis_bukti, status_indikasi, confidence_score, lokasi, waktu_kejadian, created_at, updated_at) 
+                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                val = (db_image_path, objek_terdeteksi, status_indikasi, max_sampah_conf, lokasi, waktu, waktu, waktu)
                 cursor.execute(sql, val)
                 db.commit()
-                print(f"✅ Pelanggaran disimpan ke DB pada frame {frames_passed}")
+                print(f"✅ Pelanggaran ({status_indikasi} - {max_sampah_conf:.2f}) disimpan ke DB pada frame {frames_passed}")
             except Exception as e:
                 print(f"❌ Database Error: {e}")
 

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 // Redirect root ke dashboard
 Route::redirect('/', '/dashboard');
-
+Route::patch('/dashboard/detections/{detection}/validasi', [App\Http\Controllers\DetectionController::class, 'updateValidation'])->name('dashboard.updateValidation');
 // Load dashboard routes
 require __DIR__.'/dashboard.php';
 

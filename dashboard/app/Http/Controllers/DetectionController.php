@@ -118,7 +118,7 @@ class DetectionController extends Controller
         }
         // -------------------------------------------------------------
 
-        // --- LOGIKA LAMA UNTUK UPLOAD FOTO (TETAP DIPERTAHANKAN) ---
+        // --- LOGIKA UNTUK UPLOAD FOTO ---
         $validated['gambar_bukti'] = $storedPath;
         $validated['status_validasi'] = 'Belum diverifikasi';
         $validated['status_indikasi'] = $validated['status_indikasi'] ?? 'Tidak Terindikasi';
@@ -132,14 +132,25 @@ class DetectionController extends Controller
             if (empty($violations)) {
                 $validated['status_indikasi'] = 'Tidak Terindikasi';
                 $validated['model_version'] = $model_version;
-                $detection = Detection::create($validated);
-                $this->sendTelegramIfNeeded($detection);
+                Detection::create($validated);
+                // Fungsi Telegram dihapus dari sini
             } else {
                 foreach ($violations as $idx => $v) {
                     $newValid = $validated;
-                    $newValid['status_indikasi'] = $v['status_indikasi'] ?? 'Indikasi Pelanggaran Tinggi';
+                    
+                    // Logika Baru: Tentukan level berdasarkan keyakinan AI
+                    $confidence = $v['confidence_score'] ?? 0;
+                    $newValid['confidence_score'] = $confidence;
+                    
+                    if ($confidence >= 0.75) {
+                        $newValid['status_indikasi'] = 'Indikasi Pelanggaran Tinggi';
+                    } elseif ($confidence >= 0.50) {
+                        $newValid['status_indikasi'] = 'Indikasi Pelanggaran Sedang';
+                    } else {
+                        $newValid['status_indikasi'] = 'Indikasi Pelanggaran Rendah';
+                    }
+
                     $newValid['kategori_sampah'] = $v['kategori'] ?? 'Indikasi Aktivitas Mencurigakan';
-                    $newValid['confidence_score'] = $v['confidence_score'] ?? 0;
                     $newValid['model_version'] = $model_version;
                     
                     if (!empty($v['frame_out_path'])) {
@@ -147,16 +158,16 @@ class DetectionController extends Controller
                         $newValid['gambar_bukti'] = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_frame_' . ($idx + 1) . '.jpg';
                     }
                     
-                    $detection = Detection::create($newValid);
-                    $this->sendTelegramIfNeeded($detection);
+                    Detection::create($newValid);
+                    // Fungsi Telegram dihapus dari sini
                 }
             }
         } else {
             $validated['status_indikasi'] = 'Tidak Terindikasi';
             $validated['keterangan'] = trim(($validated['keterangan'] ?? '').' | AI gagal dianalisis.', ' |');
             $validated['model_version'] = 'Error/Unknown';
-            $detection = Detection::create($validated);
-            $this->sendTelegramIfNeeded($detection);
+            Detection::create($validated);
+            // Fungsi Telegram dihapus dari sini
         }
 
         return redirect()
@@ -173,7 +184,7 @@ class DetectionController extends Controller
     {
         $validated = $request->validate([
             'status_validasi' => 'required|string|max:255',
-            'tindak_lanjut' => 'nullable|string',
+            'keterangan' => 'nullable|string', // Ganti tindak_lanjut jadi keterangan
         ]);
 
         $detection->update($validated);
@@ -181,17 +192,6 @@ class DetectionController extends Controller
         return redirect()
             ->route('dashboard.show', $detection->id)
             ->with('success', 'Status validasi berhasil diperbarui.');
-    }
-
-    public function updateValidationAjax(Request $request, Detection $detection)
-    {
-        $validated = $request->validate([
-            'status_validasi' => 'required|string|max:255',
-        ]);
-
-        $detection->update($validated);
-
-        return response()->json(['success' => true, 'message' => 'Status validasi berhasil diperbarui.']);
     }
 
     public function exportCsv()
