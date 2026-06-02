@@ -276,6 +276,13 @@ class DetectionController extends Controller
 
         return $decoded;
     }
+    
+    public function sendSingleTelegram(Detection $detection)
+     {
+            // $this->sendTelegramIfNeeded($detection);
+
+            return back()->with('success', 'Notifikasi Telegram berhasil dikirim.');
+    }
 
     private function sendTelegramIfNeeded(Detection $detection): void
     {
@@ -283,8 +290,8 @@ class DetectionController extends Controller
             return;
         }
 
-        $token = (string) env('TELEGRAM_BOT_TOKEN', '');
-        $chatId = (string) env('TELEGRAM_CHAT_ID', '');
+        $token = (string) env('TELEGRAM_BOT_TOKEN', '8770397403:AAGqk0FxHXbFI_A0VqdCtCQHfCk0THTpE1M');
+        $chatId = (string) env('TELEGRAM_CHAT_ID', '-1003941703215');
 
         if ($token === '' || $chatId === '') {
             Log::warning('Telegram tidak dikirim: TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID belum diisi.');
@@ -319,8 +326,8 @@ class DetectionController extends Controller
 
     public function sendSummaryToTelegram()
     {
-        $token = (string) env('TELEGRAM_BOT_TOKEN', '');
-        $chatId = (string) env('TELEGRAM_CHAT_ID', '');
+        $token = (string) env('TELEGRAM_BOT_TOKEN', '8770397403:AAGqk0FxHXbFI_A0VqdCtCQHfCk0THTpE1M');
+        $chatId = (string) env('TELEGRAM_CHAT_ID', '-1003941703215');
 
         if ($token === '' || $chatId === '') {
             return redirect()->route('dashboard.index')->with('error', 'Token atau Chat ID Telegram belum diatur di .env');

@@ -236,6 +236,17 @@
 
                     <button type="submit" class="btn-submit">Simpan Keputusan</button>
                 </form>
+
+                <form method="POST" action="{{ route('send.telegram', $detection->id) }}">
+                    @csrf
+                    
+                    <button type="submit"
+                            class="btn-submit"
+                            style="margin-top:10px;">
+                            📨 Kirim ke Telegram
+                    </button>
+
+</form>
             </div>
         </div>
     </div>
