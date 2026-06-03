@@ -11,10 +11,8 @@ class DetectionController extends Controller
 {
     public function index(Request $request)
     {
-
         $query = Detection::query();
 
-        // Filters
         if ($request->filled('tanggal')) {
             $query->whereDate('waktu_kejadian', $request->tanggal);
         } elseif ($request->filled('rentang_waktu')) {
@@ -27,37 +25,41 @@ class DetectionController extends Controller
                 $query->whereYear('waktu_kejadian', today()->year);
             }
         }
+
         if ($request->filled('lokasi')) {
             $query->where('lokasi', 'LIKE', '%' . $request->lokasi . '%');
         }
+
         if ($request->filled('status')) {
             $query->where('status_indikasi', $request->status);
         }
-        if ($request->filled('status_admin')) {
-            $query->where('status_validasi', $request->status_admin);
+
+        if ($request->has('status_admin') && $request->status_admin != '') {
+            if ($request->status_admin == 'Belum diverifikasi') {
+                $query->where(function($q) {
+                    $q->whereNotIn('status_validasi', ['Valid', 'False detection'])
+                      ->orWhereNull('status_validasi');
+                });
+            } else {
+                $query->where('status_validasi', $request->status_admin);
+            }
         }
 
-        // Urutkan berdasarkan ID terbaru (paling baru di atas)
         $query->orderByDesc('id');
 
-        $perPage = $request->input('per_page', 10);
-        $detections = $query->paginate($perPage)->withQueryString();
+        $detections = $query->paginate(10)->withQueryString();
 
-        // Overall Stats
         $totalDeteksi = Detection::count();
         $lokasiRawanObj = Detection::select('lokasi')->groupBy('lokasi')->orderByRaw('COUNT(*) DESC')->first();
         $lokasiRawan = $lokasiRawanObj ? $lokasiRawanObj->lokasi : '-';
-        $totalTerverifikasi = Detection::where('status_validasi', 'Valid')->count();
-        $totalFalseDetection = Detection::where('status_validasi', 'False detection')->count();
-
-        // Stats Hari Ini (Unused, removed to save memory)
-
-        // Statistik Validasi Admin (Untuk Grafik)
-        $menungguValidasi = Detection::whereNotIn('status_validasi', ['Valid', 'False detection'])->count();
+        
+        $menungguValidasi = Detection::where(function($q) {
+                                $q->whereNotIn('status_validasi', ['Valid', 'False detection'])
+                                  ->orWhereNull('status_validasi');
+                            })->count();
         $valid = Detection::where('status_validasi', 'Valid')->count();
         $diabaikan = Detection::where('status_validasi', 'False detection')->count();
 
-        // Jam Tersibuk
         $jamTersibukObj = Detection::selectRaw('HOUR(waktu_kejadian) as jam, COUNT(*) as total')
             ->whereNotNull('waktu_kejadian')
             ->groupBy('jam')
@@ -68,16 +70,9 @@ class DetectionController extends Controller
         $totalJamTersibuk = $jamTersibukObj ? $jamTersibukObj->total : 0;
 
         return view('dashboard.index', compact(
-            'detections',
-            'totalDeteksi',
-            'lokasiRawan',
-            'totalTerverifikasi',
-            'totalFalseDetection',
-            'menungguValidasi',
-            'valid',
-            'diabaikan',
-            'jamTersibuk',
-            'totalJamTersibuk'
+            'detections', 'totalDeteksi', 'lokasiRawan', 
+            'menungguValidasi', 'valid', 'diabaikan', 
+            'jamTersibuk', 'totalJamTersibuk'
         ));
     }
 
@@ -184,14 +179,12 @@ class DetectionController extends Controller
     {
         $validated = $request->validate([
             'status_validasi' => 'required|string|max:255',
-            'keterangan' => 'nullable|string', // Ganti tindak_lanjut jadi keterangan
+            'keterangan' => 'nullable|string', 
         ]);
 
         $detection->update($validated);
 
-        return redirect()
-            ->route('dashboard.show', $detection->id)
-            ->with('success', 'Status validasi berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Status validasi berhasil diperbarui.');
     }
 
     public function exportCsv()
@@ -242,7 +235,7 @@ class DetectionController extends Controller
 
     private function runAiAssistedDetection(string $evidencePath): array
     {
-        $pythonBin = env('PYTHON_BIN', 'python');
+        $pythonBin = env('PYTHON_BIN', 'python3');
         $scriptPath = base_path('scripts/ai_assisted_detection.py');
 
         if (! file_exists($scriptPath)) {
