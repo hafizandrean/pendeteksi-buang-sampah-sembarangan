@@ -34,4 +34,7 @@ Route::prefix('dashboard')
 
         Route::get('/export', [DetectionController::class, 'exportCsv'])
             ->name('export');
+
+        Route::post('/detections/{detection}/send-telegram', [DetectionController::class, 'sendSingleTelegram'])
+            ->name('send.telegram');
     });
