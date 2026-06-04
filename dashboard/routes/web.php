@@ -14,6 +14,7 @@ Route::patch('/dashboard/detections/{detection}/validasi', [App\Http\Controllers
 // Load dashboard routes
 require __DIR__.'/dashboard.php';
 
+Route::post('/dashboard/detections/{detection}/telegram', [App\Http\Controllers\DetectionController::class, 'sendSingleTelegram'])->name('send.telegram');
 // Fallback (404)
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);

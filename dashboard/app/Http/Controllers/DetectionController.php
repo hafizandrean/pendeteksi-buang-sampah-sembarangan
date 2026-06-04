@@ -271,10 +271,53 @@ class DetectionController extends Controller
     }
     
     public function sendSingleTelegram(Detection $detection)
-     {
-            // $this->sendTelegramIfNeeded($detection);
+    {
+        if ($detection->tindak_lanjut === 'Terkirim ke Telegram') {
+            return redirect()->back()->with('error', 'Data ini sudah pernah dikirim ke Telegram.');
+        }
 
-            return back()->with('success', 'Notifikasi Telegram berhasil dikirim.');
+        $token = (string) env('TELEGRAM_BOT_TOKEN', '8770397403:AAGqk0FxHXbFI_A0VqdCtCQHfCk0THTpE1M');
+        $chatId = (string) env('TELEGRAM_CHAT_ID', '-1003941703215');
+
+        if ($token === '' || $chatId === '') {
+            return redirect()->back()->with('error', 'Token atau Chat ID Telegram belum diatur.');
+        }
+
+        $message = "⚠️ *Laporan Deteksi Sampah*\n"
+            ."Lokasi: {$detection->lokasi}\n"
+            ."Waktu: {$detection->waktu_kejadian}\n"
+            ."Status: {$detection->status_indikasi}\n"
+            ."Confidence: ".($detection->confidence_score * 100)."%";
+
+        try {
+            if ($detection->gambar_bukti && file_exists(storage_path('app/public/' . $detection->gambar_bukti))) {
+                $response = Http::timeout(15)
+                    ->attach('photo', file_get_contents(storage_path('app/public/' . $detection->gambar_bukti)), 'bukti.jpg')
+                    ->post("https://api.telegram.org/bot{$token}/sendPhoto", [
+                        'chat_id' => $chatId,
+                        'caption' => $message,
+                        'parse_mode' => 'Markdown',
+                    ]);
+            } else {
+                $response = Http::asForm()->timeout(15)->post("https://api.telegram.org/bot{$token}/sendMessage", [
+                    'chat_id' => $chatId,
+                    'text' => $message,
+                    'parse_mode' => 'Markdown',
+                ]);
+            }
+
+            if ($response->successful()) {
+                $detection->update(['tindak_lanjut' => 'Terkirim ke Telegram']);
+                
+                return redirect()->back()->with('success', 'Data bukti berhasil dikirim ke bot Telegram!');
+            } else {
+                return redirect()->back()->with('error', 'Gagal kirim ke Telegram. Respons API tidak sukses.');
+            }
+            
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Gagal kirim Telegram.', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Gagal kirim ke Telegram: ' . $e->getMessage());
+        }
     }
 
     private function sendTelegramIfNeeded(Detection $detection): void

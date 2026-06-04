@@ -45,8 +45,7 @@ while True:
         print("Kamera tidak terbaca.")
         break
 
-    # Deteksi dengan threshold rendah (0.2) biar lebih sensitif
-    results = model.track(frame, persist=True, verbose=False, conf=0.2)
+    results = model.track(frame, persist=True, verbose=False, conf=0.2, imgsz=320)
 
     ada_manusia = False
     ada_sampah = False

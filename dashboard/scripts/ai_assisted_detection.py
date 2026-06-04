@@ -21,8 +21,7 @@ def detect_with_yolo(file_path: str) -> dict:
         if img is None:
             return {"status": "error", "message": "Gagal memuat gambar"}
 
-        # Confidence diturunin ke 10% (0.10) biar yang blur/jauh tetep ketangkep
-        results = model(img, verbose=False, conf=0.10)
+        results = model(img, verbose=False, conf=0.10, imgsz=320)
         
         ada_pelanggaran = False
         best_conf = 0.0

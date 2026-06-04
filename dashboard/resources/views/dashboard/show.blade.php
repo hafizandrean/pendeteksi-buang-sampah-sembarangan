@@ -7,23 +7,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Samain persis kayak Dashboard Utama */
             --surface-color: rgba(255, 255, 255, 0.45); 
             --surface-hover: rgba(255, 255, 255, 0.7);
             --border-color: rgba(255, 255, 255, 0.7); 
             
-            --text-primary: #1e293b; /* Dark Slate pekat untuk teks judul biar kontras */
+            --text-primary: #1e293b; 
             --text-secondary: #475569; 
             
-            --accent-primary: #3b82f6; /* Royal Blue */
-            --accent-button: #3b82f6; /* Warna tombol disamain sama tema Dashboard (Biru) */
+            --accent-primary: #3b82f6; 
+            --accent-button: #3b82f6; 
             --accent-button-hover: #2563eb;
             
             --accent-danger: #ef4444; 
             --accent-success: #10b981; 
             --accent-warning: #f59e0b; 
             
-            --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-family: 'Plus Jakarta Sans', sans-serif;
             --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             --shadow-md: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 20px 40px -5px rgba(0, 0, 0, 0.15);
@@ -36,13 +35,10 @@
         body {
             font-family: var(--font-family);
             background-color: #f8fafc;
-            
-            /* Background Gambar ngikutin Dashboard */
             background-image: url('{{ asset("images/blurabsBG.png") }}');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            
             color: var(--text-primary);
             min-height: 100vh;
             padding: 2rem;
@@ -52,7 +48,6 @@
         .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        /* Warna judul diganti ke dark slate biar gak nyaru */
         .header h2 { color: var(--text-primary); font-weight: 800; font-size: 1.75rem; letter-spacing: -0.02em; }
         
         .btn-back {
@@ -76,7 +71,6 @@
         .content-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
         @media (max-width: 900px) { .content-grid { grid-template-columns: 1fr; } }
 
-        /* Left Side: Detail Data */
         .image-container { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 2rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md); }
         .image-container img, .image-container video { width: 100%; height: auto; display: block; }
 
@@ -85,8 +79,6 @@
         .info-item label { display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; letter-spacing: 0.05em; }
         .info-item p { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
 
-        /* Right Side: Form Verifikasi */
-        /* Warna sub-judul diganti biar kontras dan tegas */
         .form-section-title { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.75rem; }
         
         .form-group { margin-bottom: 1.5rem; }
@@ -106,7 +98,6 @@
         }
         .btn-submit:hover { background: var(--accent-button-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); }
 
-        /* Badges */
         .badge { display: inline-flex; align-items: center; padding: 0.4rem 0.85rem; border-radius: 99px; font-size: 0.8rem; font-weight: 700; gap: 0.35rem; }
         .badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.2); }
         .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.2); }
@@ -115,6 +106,42 @@
         .badge-danger .badge-dot { background: var(--accent-danger); box-shadow: 0 0 4px var(--accent-danger);}
         .badge-warning .badge-dot { background: var(--accent-warning); box-shadow: 0 0 4px var(--accent-warning);}
         .badge-success .badge-dot { background: var(--accent-success); box-shadow: 0 0 4px var(--accent-success);}
+
+        /* Custom Modern Pop-up Styles (Smooth & Clean) */
+        .custom-modal-overlay {
+            visibility: hidden; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4);
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(6px); opacity: 0; 
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .custom-modal-overlay.active { visibility: visible; opacity: 1; }
+        
+        .custom-modal-box {
+            background: rgba(255, 255, 255, 0.95);
+            width: 320px; border-radius: 20px;
+            text-align: center; display: flex; flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); 
+            transform: scale(0.9); padding: 24px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .custom-modal-overlay.active .custom-modal-box { transform: scale(1); }
+        
+        .custom-modal-icon {
+            width: 48px; height: 48px; background: rgba(59, 130, 246, 0.1); color: var(--accent-primary);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px auto;
+        }
+        .custom-modal-title { font-weight: 800; font-size: 1.15rem; margin-bottom: 8px; color: var(--text-primary); }
+        .custom-modal-text { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px; }
+        .custom-modal-actions { display: flex; gap: 10px; }
+        .custom-modal-btn { 
+            flex: 1; padding: 12px; border-radius: 12px; font-size: 0.95rem; font-weight: 700; 
+            cursor: pointer; transition: all 0.2s; border: none; font-family: inherit;
+        }
+        .custom-modal-btn.cancel { background: #f1f5f9; color: var(--text-secondary); }
+        .custom-modal-btn.cancel:hover { background: #e2e8f0; }
+        .custom-modal-btn.confirm { background: var(--accent-button); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .custom-modal-btn.confirm:hover { background: var(--accent-button-hover); transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -128,10 +155,21 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="card" style="padding: 1rem; margin-bottom: 1rem; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #059669; font-weight: 600; display:flex; align-items:center; gap: 0.5rem;">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+        @if(session('success'))
+            <div style="padding: 16px 20px; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 2px solid rgba(16, 185, 129, 0.7); color: #047857; border-radius: 16px; margin-bottom: 20px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);">
+                <svg width="24" height="24" fill="none" stroke="#047857" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
                 {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div style="padding: 16px 20px; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 2px solid rgba(239, 68, 68, 0.7); color: #b91c1c; border-radius: 16px; margin-bottom: 20px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.3);">
+                <svg width="24" height="24" fill="none" stroke="#b91c1c" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                {{ session('error') }}
             </div>
         @endif
 
@@ -237,19 +275,46 @@
                     <button type="submit" class="btn-submit">Simpan Keputusan</button>
                 </form>
 
-                <form method="POST" action="{{ route('send.telegram', $detection->id) }}">
-                    @csrf
-                    
-                    <button type="submit"
-                            class="btn-submit"
-                            style="margin-top:10px;">
-                            📨 Kirim ke Telegram
+                @if($detection->tindak_lanjut === 'Terkirim ke Telegram')
+                    <button type="button" style="width: 100%; padding: 1rem; margin-top: 15px; border-radius: 10px; background: rgba(156, 163, 175, 0.4); color: #475569; border: 1px solid rgba(156, 163, 175, 0.6); font-weight: 800; font-size: 1rem; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        Sudah Terkirim
                     </button>
-
-</form>
+                @else
+                    <button type="button" onclick="openCustomModal()" class="btn-submit" style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        Kirim ke Telegram
+                    </button>
+                @endif
+                
             </div>
         </div>
     </div>
 
+    <div id="customModal" class="custom-modal-overlay">
+        <div class="custom-modal-box">
+            <div class="custom-modal-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            </div>
+            <div class="custom-modal-title">Kirim Laporan?</div>
+            <div class="custom-modal-text">Data yang sudah dikirim ke Telegram tidak bisa ditarik kembali atau dikirim ulang.</div>
+            <div class="custom-modal-actions">
+                <button type="button" class="custom-modal-btn cancel" onclick="closeCustomModal()">Batal</button>
+                <form method="POST" action="{{ route('send.telegram', $detection->id) }}" style="flex:1; margin:0; display:flex;">
+                    @csrf
+                    <button type="submit" class="custom-modal-btn confirm" style="width: 100%;">Kirim Sekarang</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openCustomModal() {
+            document.getElementById('customModal').classList.add('active');
+        }
+        function closeCustomModal() {
+            document.getElementById('customModal').classList.remove('active');
+        }
+    </script>
 </body>
 </html>
