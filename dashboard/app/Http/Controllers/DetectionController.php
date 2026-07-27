@@ -91,13 +91,21 @@ class DetectionController extends Controller
             'lokasi' => 'required|string|max:255',
             'nama_pelaku' => 'nullable|string|max:255',
             'waktu_kejadian' => 'required|date',
-            'gambar_bukti' => 'required|file|mimes:jpg,jpeg,png,mp4,mov,avi,mkv|max:102400',
+            'gambar_bukti' => 'required|file|max:102400',
             'jenis_bukti' => 'required|string|max:255',
             'status_indikasi' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
         ]);
 
-        $storedPath = $request->file('gambar_bukti')->store('bukti', 'public');
+        $file = $request->file('gambar_bukti');
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $filename = \Illuminate\Support\Str::random(40) . '.' . $ext;
+        $targetDir = storage_path('app/public/bukti');
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+        $file->move($targetDir, $filename);
+        $storedPath = 'bukti/' . $filename;
         $validated['gambar_bukti'] = $storedPath;
 
         $validated['status_validasi'] = 'Belum diverifikasi';
@@ -333,5 +341,53 @@ class DetectionController extends Controller
             Log::error('Gagal kirim ringkasan Telegram.', ['error' => $e->getMessage()]);
             return redirect()->route('dashboard.index')->with('error', 'Gagal mengirim pesan ke Telegram.');
         }
+    }
+
+    public function ingest(Request $request)
+    {
+        $apiKey = $request->header('X-Detection-API-Key') ?: $request->input('api_key');
+        $expectedKey = env('DETECTION_API_KEY');
+
+        if (empty($expectedKey) || $apiKey !== $expectedKey) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized: Invalid API Key'
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'lokasi' => 'required|string|max:255',
+            'waktu_kejadian' => 'required|date',
+            'gambar_bukti' => 'required|file|max:20480',
+            'jenis_bukti' => 'required|string|max:255',
+            'status_indikasi' => 'required|string|max:255',
+            'kategori_sampah' => 'required|string|max:255',
+            'confidence_score' => 'required|numeric',
+            'model_version' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        $file = $request->file('gambar_bukti');
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $filename = \Illuminate\Support\Str::random(40) . '.' . $ext;
+        $targetDir = storage_path('app/public/bukti');
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+        $file->move($targetDir, $filename);
+        $storedPath = 'bukti/' . $filename;
+        $validated['gambar_bukti'] = $storedPath;
+        $validated['status_validasi'] = 'Belum diverifikasi';
+
+        $detection = Detection::create($validated);
+
+        $this->sendTelegramIfNeeded($detection);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data deteksi berhasil disimpan.',
+            'id' => $detection->id,
+            'path' => $storedPath
+        ], 201);
     }
 }

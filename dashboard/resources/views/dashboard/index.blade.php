@@ -326,9 +326,9 @@
                                         @if($item->gambar_bukti)
                                             @php $ext = strtolower(pathinfo($item->gambar_bukti, PATHINFO_EXTENSION)); @endphp
                                             @if(in_array($ext, ['mp4', 'mov', 'avi', 'mkv']))
-                                                <video src="{{ asset('storage/'.$item->gambar_bukti) }}" class="thumbnail" onclick="openModal('video', '{{ asset('storage/'.$item->gambar_bukti) }}')" muted></video>
+                                                <video src="/storage/{{ $item->gambar_bukti }}" class="thumbnail" onclick="openModal('video', '/storage/{{ $item->gambar_bukti }}')" muted></video>
                                             @else
-                                                <img src="{{ asset('storage/'.$item->gambar_bukti) }}" class="thumbnail" onclick="openModal('img', '{{ asset('storage/'.$item->gambar_bukti) }}')" alt="Bukti">
+                                                <img src="/storage/{{ $item->gambar_bukti }}" class="thumbnail" onclick="openModal('img', '/storage/{{ $item->gambar_bukti }}')" alt="Bukti">
                                             @endif
                                         @else
                                             <div class="thumbnail" style="background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#94A3B8; font-size:10px;">N/A</div>
@@ -416,9 +416,9 @@
                     @if($latest->gambar_bukti)
                         @php $ext = strtolower(pathinfo($latest->gambar_bukti, PATHINFO_EXTENSION)); @endphp
                         @if(in_array($ext, ['mp4', 'mov', 'avi', 'mkv']))
-                            <video src="{{ asset('storage/'.$latest->gambar_bukti) }}" muted loop autoplay></video>
+                            <video src="/storage/{{ $latest->gambar_bukti }}" muted loop autoplay></video>
                         @else
-                            <img src="{{ asset('storage/'.$latest->gambar_bukti) }}" alt="Terakhir">
+                            <img src="/storage/{{ $latest->gambar_bukti }}" alt="Terakhir">
                         @endif
                     @endif
                     <div class="latest-info">
