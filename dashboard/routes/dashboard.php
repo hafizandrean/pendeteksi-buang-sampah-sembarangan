@@ -25,6 +25,13 @@ Route::prefix('dashboard')
             ->whereNumber('detection')
             ->name('validation');
 
+        Route::patch('/detections/{detection}/validation-ajax', [DetectionController::class, 'updateValidationAjax'])
+            ->whereNumber('detection')
+            ->name('validation.ajax');
+
+        Route::post('/send-summary', [DetectionController::class, 'sendSummaryToTelegram'])
+            ->name('send-summary');
+
         Route::get('/export', [DetectionController::class, 'exportCsv'])
             ->name('export');
     });
